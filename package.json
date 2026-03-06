@@ -1,0 +1,50 @@
+{
+  "name": "agent-spy",
+  "productName": "Agent Spy",
+  "version": "1.0.0",
+  "description": "Verify changes made by AI agents to your files",
+  "main": ".vite/build/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Jan Karstens",
+    "email": "5099251+jank@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
+    "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron-forge/plugin-vite": "^7.11.1",
+    "@electron/fuses": "^1.8.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@shikijs/rehype": "^4.0.1",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "40.8.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "shiki": "^4.0.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.4.1"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "ignore": "^7.0.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "simple-git": "^3.32.3",
+    "zustand": "^5.0.11"
+  }
+}
