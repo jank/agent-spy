@@ -11,6 +11,8 @@ interface AppState {
   fileContent: string | null;
   diffData: FileDiffResult | null;
   isLoading: boolean;
+  changedLines: number[];
+  scrollToLine: number | null;
 
   setFolder: (result: OpenFolderResult) => void;
   setFiles: (files: WatchedFile[]) => void;
@@ -20,6 +22,18 @@ interface AppState {
   setFileContent: (content: string | null) => void;
   setDiffData: (data: FileDiffResult | null) => void;
   setLoading: (loading: boolean) => void;
+  setChangedLines: (lines: number[]) => void;
+  setScrollToLine: (line: number | null) => void;
+
+  // Imperative callbacks registered by components
+  goToNextChange: (() => void) | null;
+  goToPrevChange: (() => void) | null;
+  focusFilter: (() => void) | null;
+  toggleChangedOnly: (() => void) | null;
+  setGoToNextChange: (cb: (() => void) | null) => void;
+  setGoToPrevChange: (cb: (() => void) | null) => void;
+  setFocusFilter: (cb: (() => void) | null) => void;
+  setToggleChangedOnly: (cb: (() => void) | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -32,6 +46,8 @@ export const useAppStore = create<AppState>((set) => ({
   fileContent: null,
   diffData: null,
   isLoading: false,
+  changedLines: [],
+  scrollToLine: null,
 
   setFolder: (result) =>
     set({
@@ -52,9 +68,22 @@ export const useAppStore = create<AppState>((set) => ({
       diffData: null,
       viewMode: 'content',
       isLoading: true,
+      changedLines: [],
+      scrollToLine: null,
     }),
   setViewMode: (viewMode) => set({ viewMode }),
   setFileContent: (fileContent) => set({ fileContent, isLoading: false }),
   setDiffData: (diffData) => set({ diffData, isLoading: false }),
   setLoading: (isLoading) => set({ isLoading }),
+  setChangedLines: (changedLines) => set({ changedLines }),
+  setScrollToLine: (scrollToLine) => set({ scrollToLine }),
+
+  goToNextChange: null,
+  goToPrevChange: null,
+  focusFilter: null,
+  toggleChangedOnly: null,
+  setGoToNextChange: (cb) => set({ goToNextChange: cb }),
+  setGoToPrevChange: (cb) => set({ goToPrevChange: cb }),
+  setFocusFilter: (cb) => set({ focusFilter: cb }),
+  setToggleChangedOnly: (cb) => set({ toggleChangedOnly: cb }),
 }));

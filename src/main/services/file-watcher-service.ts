@@ -17,6 +17,7 @@ export class FileWatcherService {
   private callback: ((files: WatchedFile[]) => void) | null = null;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private gitChangedFiles = new Set<string>();
+  private refreshGitStatus: (() => Promise<Set<string>>) | null = null;
 
   constructor(private rootPath: string) {
     this.ig = ignore();
@@ -42,6 +43,10 @@ export class FileWatcherService {
       file.isGitChanged = this.gitChangedFiles.has(file.relativePath);
       this.files.set(absPath, file);
     }
+  }
+
+  onRefreshGitStatus(cb: () => Promise<Set<string>>): void {
+    this.refreshGitStatus = cb;
   }
 
   startWatching(): void {
@@ -85,7 +90,11 @@ export class FileWatcherService {
 
   private emitDebounced(): void {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => {
+    this.debounceTimer = setTimeout(async () => {
+      if (this.refreshGitStatus) {
+        const changed = await this.refreshGitStatus();
+        this.setGitChangedFiles(changed);
+      }
       this.callback?.(this.getSortedFiles());
     }, 300);
   }

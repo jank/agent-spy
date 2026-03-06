@@ -20,6 +20,37 @@ export default function App() {
     });
   }, []);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip when typing in an input/textarea
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      const store = useAppStore.getState();
+      switch (e.key) {
+        case 'j':
+          e.preventDefault();
+          store.goToNextChange?.();
+          break;
+        case 'k':
+          e.preventDefault();
+          store.goToPrevChange?.();
+          break;
+        case '/':
+          e.preventDefault();
+          store.focusFilter?.();
+          break;
+        case 'c':
+          e.preventDefault();
+          store.toggleChangedOnly?.();
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = window.api.onFilesChanged((files: WatchedFile[]) => {
       const store = useAppStore.getState();

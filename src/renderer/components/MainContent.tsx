@@ -1,7 +1,75 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppStore } from '../stores/app-store';
 import { FileViewer } from './FileViewer';
 import { EmptyState } from './EmptyState';
+
+function ChangeNavigation() {
+  const changedLines = useAppStore((s) => s.changedLines);
+  const indexRef = useRef(0);
+
+  // Compute hunks from changed lines
+  const hunks = useMemo(() => {
+    if (changedLines.length === 0) return [];
+    const h: number[] = [changedLines[0]];
+    for (let i = 1; i < changedLines.length; i++) {
+      if (changedLines[i] > changedLines[i - 1] + 1) {
+        h.push(changedLines[i]);
+      }
+    }
+    return h;
+  }, [changedLines]);
+
+  // Reset index when hunks change
+  useMemo(() => {
+    indexRef.current = 0;
+  }, [hunks]);
+
+  const goNext = useCallback(() => {
+    if (hunks.length === 0) return;
+    indexRef.current = (indexRef.current + 1) % hunks.length;
+    useAppStore.getState().setScrollToLine(hunks[indexRef.current]);
+  }, [hunks]);
+
+  const goPrev = useCallback(() => {
+    if (hunks.length === 0) return;
+    indexRef.current = (indexRef.current - 1 + hunks.length) % hunks.length;
+    useAppStore.getState().setScrollToLine(hunks[indexRef.current]);
+  }, [hunks]);
+
+  // Register callbacks on the store for keyboard shortcuts
+  useEffect(() => {
+    useAppStore.getState().setGoToNextChange(goNext);
+    useAppStore.getState().setGoToPrevChange(goPrev);
+    return () => {
+      useAppStore.getState().setGoToNextChange(null);
+      useAppStore.getState().setGoToPrevChange(null);
+    };
+  }, [goNext, goPrev]);
+
+  if (hunks.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 app-no-drag">
+      <span className="text-xs text-zinc-500 mr-1">
+        {hunks.length} {hunks.length === 1 ? 'change' : 'changes'}
+      </span>
+      <button
+        onClick={goPrev}
+        className="px-1.5 py-0.5 text-xs rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 text-zinc-500"
+        title="Previous change (k)"
+      >
+        ▲
+      </button>
+      <button
+        onClick={goNext}
+        className="px-1.5 py-0.5 text-xs rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 text-zinc-500"
+        title="Next change (j)"
+      >
+        ▼
+      </button>
+    </div>
+  );
+}
 
 export function MainContent() {
   const { selectedFile, viewMode, isGitRepo, isLoading } = useAppStore();
@@ -31,6 +99,8 @@ export function MainContent() {
         <span className="text-sm font-medium truncate flex-1">
           {selectedFile.relativePath}
         </span>
+
+        {isGitRepo && selectedFile.isGitChanged && <ChangeNavigation />}
 
         {isGitRepo && (
           <div className="flex gap-1 app-no-drag">

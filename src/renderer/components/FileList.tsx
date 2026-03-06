@@ -102,7 +102,7 @@ function FileRow({
 /**
  * Animated file list using FLIP technique for smooth reordering.
  */
-export function FileList({ filter }: { filter: string }) {
+export function FileList({ filter, changedOnly }: { filter: string; changedOnly: boolean }) {
   const { files, starred } = useAppStore();
   const [flashSet, setFlashSet] = useState<Set<string>>(new Set());
   const prevModifiedRef = useRef<Map<string, number>>(new Map());
@@ -110,23 +110,29 @@ export function FileList({ filter }: { filter: string }) {
   const positionsRef = useRef<Map<string, number>>(new Map());
 
   const lowerFilter = filter.toLowerCase();
-  const filtered = lowerFilter
+  let filtered = lowerFilter
     ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
     : files;
+  if (changedOnly) {
+    filtered = filtered.filter((f) => f.isGitChanged);
+  }
   const starredFiles = filtered.filter((f) => starred.includes(f.absolutePath));
   const otherFiles = filtered.filter((f) => !starred.includes(f.absolutePath));
 
-  // Before DOM update: capture current positions
+  // Before DOM update: capture current positions (only when files change)
   useLayoutEffect(() => {
     if (!containerRef.current) return;
     const positions = new Map<string, number>();
     const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
     rows.forEach((row) => {
+      // Clear any lingering transform before capturing position
+      row.style.transform = '';
+      row.style.transition = '';
       const path = row.dataset.filePath!;
       positions.set(path, row.getBoundingClientRect().top);
     });
     positionsRef.current = positions;
-  });
+  }, [files, starred]);
 
   // After DOM update: detect changes, flash, and animate position
   useEffect(() => {
@@ -151,6 +157,7 @@ export function FileList({ filter }: { filter: string }) {
       setFlashSet(newFlash);
 
       // FLIP: animate rows from old position to new position
+      const animatedRows: HTMLElement[] = [];
       if (containerRef.current) {
         const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
         rows.forEach((row) => {
@@ -166,14 +173,26 @@ export function FileList({ filter }: { filter: string }) {
               row.offsetHeight;
               row.style.transform = '';
               row.style.transition = 'transform 300ms ease-out';
+              animatedRows.push(row);
             }
           }
         });
       }
 
+      // Clean up inline styles after animation completes
+      const cleanupTimeout = setTimeout(() => {
+        animatedRows.forEach((row) => {
+          row.style.transform = '';
+          row.style.transition = '';
+        });
+      }, 350);
+
       // Clear flash after animation
-      const timeout = setTimeout(() => setFlashSet(new Set()), 5000);
-      return () => clearTimeout(timeout);
+      const flashTimeout = setTimeout(() => setFlashSet(new Set()), 5000);
+      return () => {
+        clearTimeout(cleanupTimeout);
+        clearTimeout(flashTimeout);
+      };
     }
   }, [files]);
 

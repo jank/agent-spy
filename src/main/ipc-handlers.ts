@@ -50,6 +50,7 @@ async function openFolder(folderPath: string) {
   if (isGitRepo) {
     const changedFiles = await gitService.getChangedFiles();
     watcherService.setGitChangedFiles(changedFiles);
+    watcherService.onRefreshGitStatus(() => gitService!.getChangedFiles());
   }
 
   watcherService.startWatching();

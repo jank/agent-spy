@@ -3,6 +3,7 @@ import Editor, { type OnMount } from '@monaco-editor/react';
 import { getLanguageFromPath } from '../lib/file-types';
 import { useChangedLines } from '../hooks/use-changed-lines';
 import { useTheme } from '../hooks/use-theme';
+import { useAppStore } from '../stores/app-store';
 import type { WatchedFile } from '../types';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 export function CodeViewer({ file, content }: Props) {
   const isDark = useTheme();
   const changedLines = useChangedLines(file, content);
+  const scrollToLine = useAppStore((s) => s.scrollToLine);
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -38,6 +40,15 @@ export function CodeViewer({ file, content }: Props) {
 
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
   }, [changedLines]);
+
+  // Scroll to target line
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || scrollToLine === null) return;
+
+    editor.revealLineInCenter(scrollToLine);
+    useAppStore.getState().setScrollToLine(null);
+  }, [scrollToLine]);
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;

@@ -13,11 +13,19 @@ export function useChangedLines(file: WatchedFile, content: string): number[] {
   const [changedLines, setChangedLines] = useState<number[]>([]);
   const committedRef = useRef<{ path: string; content: string | null }>({ path: '', content: null });
 
+  const updateLines = (lines: number[]) => {
+    setChangedLines(lines);
+    useAppStore.getState().setChangedLines(lines);
+    if (lines.length > 0) {
+      useAppStore.getState().setScrollToLine(lines[0]);
+    }
+  };
+
   // Fetch committed content only when file path or git-changed status changes
   useEffect(() => {
     if (!isGitRepo || !file.isGitChanged) {
       committedRef.current = { path: file.absolutePath, content: null };
-      setChangedLines([]);
+      updateLines([]);
       return;
     }
 
@@ -26,9 +34,9 @@ export function useChangedLines(file: WatchedFile, content: string): number[] {
       if (cancelled) return;
       committedRef.current = { path: file.absolutePath, content: committed };
       if (committed !== null) {
-        setChangedLines(computeChangedLines(committed, content));
+        updateLines(computeChangedLines(committed, content));
       } else {
-        setChangedLines([]);
+        updateLines([]);
       }
     });
     return () => { cancelled = true; };
@@ -38,7 +46,7 @@ export function useChangedLines(file: WatchedFile, content: string): number[] {
   useEffect(() => {
     const cached = committedRef.current;
     if (cached.path !== file.absolutePath || cached.content === null) return;
-    setChangedLines(computeChangedLines(cached.content, content));
+    updateLines(computeChangedLines(cached.content, content));
   }, [content, file.absolutePath]);
 
   return changedLines;
