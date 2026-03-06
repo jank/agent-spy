@@ -18,14 +18,14 @@ export function MainContent() {
 
   if (!selectedFile) {
     return (
-      <div className="flex-1 pt-[52px]">
+      <div className="flex-1">
         <EmptyState />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col pt-[52px] min-w-0">
+    <div className="flex-1 flex flex-col min-w-0">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
         <span className="text-sm font-medium truncate flex-1">
