@@ -49,6 +49,19 @@ body {
   font-weight: 600;
 }
 
+/* Code block styling: tight line-height for ASCII art, no grey background */
+.prose pre {
+  line-height: 1.2;
+  background: transparent;
+  padding: 1rem;
+}
+
+.prose pre code {
+  line-height: inherit;
+  padding: 0;
+  background: transparent;
+}
+
 /* File update flash animation */
 @keyframes file-flash {
   0% { background-color: rgba(250, 204, 21, 0.4); }
