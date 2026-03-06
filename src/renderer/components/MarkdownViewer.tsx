@@ -14,6 +14,13 @@ export function MarkdownViewer({ content }: Props) {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
+            pre({ children, ...props }) {
+              return (
+                <pre className="!text-zinc-900 dark:!text-zinc-100" {...props}>
+                  {children}
+                </pre>
+              );
+            },
             code({ className, children, ...props }) {
               const isInline = !className;
               if (isInline) {
