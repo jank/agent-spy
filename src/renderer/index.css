@@ -49,6 +49,25 @@ body {
   font-weight: 600;
 }
 
+/* File update flash animation */
+@keyframes file-flash {
+  0% { background-color: rgba(250, 204, 21, 0.4); }
+  100% { background-color: transparent; }
+}
+
+.file-flash {
+  animation: file-flash 1.5s ease-out;
+}
+
+.dark .file-flash {
+  animation: file-flash-dark 1.5s ease-out;
+}
+
+@keyframes file-flash-dark {
+  0% { background-color: rgba(250, 204, 21, 0.25); }
+  100% { background-color: transparent; }
+}
+
 /* Thin scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

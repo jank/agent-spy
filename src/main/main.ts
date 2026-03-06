@@ -1,14 +1,22 @@
-import { app, BrowserWindow, globalShortcut } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { registerIpcHandlers } from './ipc-handlers';
+import { loadState, saveState } from './services/app-state';
+
+app.setName('AgentSpy');
 
 let mainWindow: BrowserWindow | null = null;
 
 const createWindow = () => {
+  const state = loadState();
+  const bounds = state.windowBounds;
+
   mainWindow = new BrowserWindow({
     title: 'Agent Spy',
-    width: 1200,
-    height: 800,
+    width: bounds?.width ?? 1200,
+    height: bounds?.height ?? 800,
+    x: bounds?.x,
+    y: bounds?.y,
     minWidth: 800,
     minHeight: 500,
     titleBarStyle: 'hiddenInset',
@@ -20,6 +28,15 @@ const createWindow = () => {
       nodeIntegration: false,
     },
   });
+
+  const saveBounds = () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      saveState({ windowBounds: mainWindow.getBounds() });
+    }
+  };
+
+  mainWindow.on('resize', saveBounds);
+  mainWindow.on('move', saveBounds);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);

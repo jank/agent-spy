@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 import { useThemeStore } from '../hooks/use-theme';
 import { FileList } from './FileList';
@@ -27,21 +27,23 @@ export function Sidebar() {
   const [width, setWidth] = useState(280);
   const isResizing = useRef(false);
 
-  const handleOpenFolder = async () => {
-    const result = await window.api.openFolder();
-    if (result) {
-      useAppStore.getState().setFolder(result);
-    }
-  };
+  // Restore persisted sidebar width
+  useEffect(() => {
+    window.api.getPersistedState().then((state) => {
+      if (state.sidebarWidth) setWidth(state.sidebarWidth);
+    });
+  }, []);
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     isResizing.current = true;
 
+    let lastWidth = 0;
+
     const onMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      const newWidth = Math.max(200, Math.min(600, e.clientX));
-      setWidth(newWidth);
+      lastWidth = Math.max(200, Math.min(600, e.clientX));
+      setWidth(lastWidth);
     };
 
     const onMouseUp = () => {
@@ -50,6 +52,7 @@ export function Sidebar() {
       document.removeEventListener('mouseup', onMouseUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      if (lastWidth) window.api.saveSidebarWidth(lastWidth);
     };
 
     document.body.style.cursor = 'col-resize';
@@ -60,26 +63,9 @@ export function Sidebar() {
 
   return (
     <div
-      className="relative h-screen flex flex-col border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/50 shrink-0"
+      className="relative flex flex-col border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/50 shrink-0"
       style={{ width }}
     >
-      {/* Top area - below traffic lights */}
-      <div className="pt-[52px] px-3 pb-2">
-        <button
-          onClick={handleOpenFolder}
-          className="app-no-drag w-full px-3 py-1.5 text-sm bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-md transition-colors"
-        >
-          Open Folder...
-        </button>
-      </div>
-
-      {/* Title */}
-      {folderPath && (
-        <div className="px-3 pb-2 text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title={folderPath}>
-          Spying on {folderPath}
-        </div>
-      )}
-
       {/* File list */}
       <div className="flex-1 overflow-y-auto">
         {folderPath ? (

@@ -2,9 +2,23 @@ import { useEffect } from 'react';
 import { useAppStore } from './stores/app-store';
 import { Sidebar } from './components/Sidebar';
 import { MainContent } from './components/MainContent';
+import { TitleBar } from './components/TitleBar';
 import type { WatchedFile } from './types';
 
 export default function App() {
+  // Restore last folder on startup
+  useEffect(() => {
+    window.api.getPersistedState().then((state) => {
+      if (state.lastFolderPath) {
+        window.api.openFolderByPath(state.lastFolderPath).then((result) => {
+          if (result) {
+            useAppStore.getState().setFolder(result);
+          }
+        });
+      }
+    });
+  }, []);
+
   useEffect(() => {
     const unsubscribe = window.api.onFilesChanged((files: WatchedFile[]) => {
       const store = useAppStore.getState();
@@ -32,11 +46,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
-      {/* Drag region for titlebar */}
-      <div className="fixed top-0 left-0 right-0 h-[52px] app-drag-region z-50" />
-      <Sidebar />
-      <MainContent />
+    <div className="flex flex-col h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+      <TitleBar />
+      <div className="flex flex-1 min-h-0">
+        <Sidebar />
+        <MainContent />
+      </div>
     </div>
   );
 }

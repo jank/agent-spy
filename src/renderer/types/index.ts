@@ -22,12 +22,21 @@ export type ViewMode = 'content' | 'diff';
 
 export type ViewerType = 'code' | 'markdown';
 
+export interface PersistedState {
+  windowBounds?: { x: number; y: number; width: number; height: number };
+  sidebarWidth?: number;
+  lastFolderPath?: string;
+}
+
 export interface ElectronAPI {
   openFolder: () => Promise<OpenFolderResult | null>;
+  openFolderByPath: (path: string) => Promise<OpenFolderResult | null>;
   getFileContent: (path: string) => Promise<string>;
   getGitDiff: (path: string) => Promise<FileDiffResult | null>;
   toggleStar: (path: string) => Promise<string[]>;
   getStarred: () => Promise<string[]>;
+  getPersistedState: () => Promise<PersistedState>;
+  saveSidebarWidth: (width: number) => Promise<void>;
   onFilesChanged: (cb: (files: WatchedFile[]) => void) => () => void;
 }
 

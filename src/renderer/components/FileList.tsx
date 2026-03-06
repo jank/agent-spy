@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 import type { WatchedFile } from '../types';
 
@@ -12,10 +13,25 @@ function timeAgo(ms: number): string {
   return `${days}d ago`;
 }
 
-function FileRow({ file }: { file: WatchedFile }) {
+function FileRow({
+  file,
+  flashing,
+}: {
+  file: WatchedFile;
+  flashing: boolean;
+}) {
   const { selectedFile, starred } = useAppStore();
   const isSelected = selectedFile?.absolutePath === file.absolutePath;
   const isStarred = starred.includes(file.absolutePath);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [flashKey, setFlashKey] = useState(0);
+
+  // Trigger flash animation by bumping key
+  useEffect(() => {
+    if (flashing) {
+      setFlashKey((k) => k + 1);
+    }
+  }, [flashing, file.modifiedMs]);
 
   const handleClick = () => {
     useAppStore.getState().selectFile(file);
@@ -32,6 +48,7 @@ function FileRow({ file }: { file: WatchedFile }) {
 
   return (
     <div
+      ref={rowRef}
       onClick={handleClick}
       className={`app-no-drag flex items-center gap-2 px-3 py-1.5 cursor-pointer text-sm transition-colors ${
         isSelected
@@ -39,6 +56,14 @@ function FileRow({ file }: { file: WatchedFile }) {
           : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30'
       }`}
     >
+      {/* Flash overlay */}
+      {flashing && (
+        <div
+          key={flashKey}
+          className="absolute inset-0 file-flash pointer-events-none"
+        />
+      )}
+
       {/* Git change indicator */}
       {file.isGitChanged && (
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
@@ -67,11 +92,79 @@ function FileRow({ file }: { file: WatchedFile }) {
   );
 }
 
+/**
+ * Animated file list using FLIP technique for smooth reordering.
+ */
 export function FileList() {
   const { files, starred } = useAppStore();
+  const [flashSet, setFlashSet] = useState<Set<string>>(new Set());
+  const prevModifiedRef = useRef<Map<string, number>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const positionsRef = useRef<Map<string, number>>(new Map());
 
   const starredFiles = files.filter((f) => starred.includes(f.absolutePath));
   const otherFiles = files.filter((f) => !starred.includes(f.absolutePath));
+
+  // Before DOM update: capture current positions
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+    const positions = new Map<string, number>();
+    const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
+    rows.forEach((row) => {
+      const path = row.dataset.filePath!;
+      positions.set(path, row.getBoundingClientRect().top);
+    });
+    positionsRef.current = positions;
+  });
+
+  // After DOM update: detect changes, flash, and animate position
+  useEffect(() => {
+    const prev = prevModifiedRef.current;
+    const newFlash = new Set<string>();
+
+    for (const file of files) {
+      const prevMs = prev.get(file.absolutePath);
+      if (prevMs !== undefined && prevMs !== file.modifiedMs) {
+        newFlash.add(file.absolutePath);
+      }
+    }
+
+    // Update stored timestamps
+    const next = new Map<string, number>();
+    for (const file of files) {
+      next.set(file.absolutePath, file.modifiedMs);
+    }
+    prevModifiedRef.current = next;
+
+    if (newFlash.size > 0) {
+      setFlashSet(newFlash);
+
+      // FLIP: animate rows from old position to new position
+      if (containerRef.current) {
+        const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
+        rows.forEach((row) => {
+          const path = row.dataset.filePath!;
+          const oldTop = positionsRef.current.get(path);
+          if (oldTop !== undefined) {
+            const newTop = row.getBoundingClientRect().top;
+            const delta = oldTop - newTop;
+            if (Math.abs(delta) > 1) {
+              row.style.transform = `translateY(${delta}px)`;
+              row.style.transition = 'none';
+              // Force reflow
+              row.offsetHeight;
+              row.style.transform = '';
+              row.style.transition = 'transform 300ms ease-out';
+            }
+          }
+        });
+      }
+
+      // Clear flash after animation
+      const timeout = setTimeout(() => setFlashSet(new Set()), 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [files]);
 
   if (files.length === 0) {
     return (
@@ -82,20 +175,24 @@ export function FileList() {
   }
 
   return (
-    <div>
+    <div ref={containerRef}>
       {starredFiles.length > 0 && (
         <>
           <div className="px-3 py-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
             Starred
           </div>
           {starredFiles.map((file) => (
-            <FileRow key={file.absolutePath} file={file} />
+            <div key={file.absolutePath} data-file-path={file.absolutePath} className="relative">
+              <FileRow file={file} flashing={flashSet.has(file.absolutePath)} />
+            </div>
           ))}
           <div className="mx-3 my-1 border-t border-zinc-200 dark:border-zinc-700" />
         </>
       )}
       {otherFiles.map((file) => (
-        <FileRow key={file.absolutePath} file={file} />
+        <div key={file.absolutePath} data-file-path={file.absolutePath} className="relative">
+          <FileRow file={file} flashing={flashSet.has(file.absolutePath)} />
+        </div>
       ))}
     </div>
   );
