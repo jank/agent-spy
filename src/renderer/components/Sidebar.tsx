@@ -25,6 +25,7 @@ function ThemeToggle() {
 export function Sidebar() {
   const { folderPath } = useAppStore();
   const [width, setWidth] = useState(280);
+  const [search, setSearch] = useState('');
   const isResizing = useRef(false);
 
   // Restore persisted sidebar width
@@ -66,10 +67,23 @@ export function Sidebar() {
       className="relative flex flex-col border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/50 shrink-0"
       style={{ width }}
     >
+      {/* Search */}
+      {folderPath && (
+        <div className="px-3 py-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter files..."
+            className="app-no-drag w-full px-2 py-1 text-sm rounded-md bg-zinc-200/70 dark:bg-zinc-700/70 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:ring-1 focus:ring-blue-500/50"
+          />
+        </div>
+      )}
+
       {/* File list */}
       <div className="flex-1 overflow-y-auto">
         {folderPath ? (
-          <FileList />
+          <FileList filter={search} />
         ) : (
           <div className="px-3 py-8 text-center text-sm text-zinc-400">
             Open a folder to get started

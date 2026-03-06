@@ -102,15 +102,19 @@ function FileRow({
 /**
  * Animated file list using FLIP technique for smooth reordering.
  */
-export function FileList() {
+export function FileList({ filter }: { filter: string }) {
   const { files, starred } = useAppStore();
   const [flashSet, setFlashSet] = useState<Set<string>>(new Set());
   const prevModifiedRef = useRef<Map<string, number>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const positionsRef = useRef<Map<string, number>>(new Map());
 
-  const starredFiles = files.filter((f) => starred.includes(f.absolutePath));
-  const otherFiles = files.filter((f) => !starred.includes(f.absolutePath));
+  const lowerFilter = filter.toLowerCase();
+  const filtered = lowerFilter
+    ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
+    : files;
+  const starredFiles = filtered.filter((f) => starred.includes(f.absolutePath));
+  const otherFiles = filtered.filter((f) => !starred.includes(f.absolutePath));
 
   // Before DOM update: capture current positions
   useLayoutEffect(() => {
@@ -173,10 +177,10 @@ export function FileList() {
     }
   }, [files]);
 
-  if (files.length === 0) {
+  if (filtered.length === 0) {
     return (
       <div className="px-3 py-8 text-center text-sm text-zinc-400">
-        No files found
+        {lowerFilter ? 'No matching files' : 'No files found'}
       </div>
     );
   }
