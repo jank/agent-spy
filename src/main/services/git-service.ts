@@ -37,15 +37,18 @@ export class GitService {
     }
   }
 
-  async getFileDiff(absolutePath: string): Promise<FileDiffResult> {
+  async getCommittedContent(absolutePath: string): Promise<string | null> {
     const relativePath = path.relative(this.repoPath, absolutePath);
-    const modified = await fs.promises.readFile(absolutePath, 'utf-8');
-
     try {
-      const original = await this.git.show([`HEAD:${relativePath}`]);
-      return { original, modified, isNew: false };
+      return await this.git.show([`HEAD:${relativePath}`]);
     } catch {
-      return { original: '', modified, isNew: true };
+      return null;
     }
+  }
+
+  async getFileDiff(absolutePath: string): Promise<FileDiffResult> {
+    const modified = await fs.promises.readFile(absolutePath, 'utf-8');
+    const original = await this.getCommittedContent(absolutePath);
+    return { original: original ?? '', modified, isNew: original === null };
   }
 }

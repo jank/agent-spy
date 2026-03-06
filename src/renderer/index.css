@@ -90,6 +90,20 @@ body {
   100% { background-color: transparent; }
 }
 
+/* Changed line gutter indicator (yellow bar) for code viewer */
+.changed-line-gutter {
+  background-color: rgba(250, 204, 21, 0.7);
+  width: 3px !important;
+  margin-left: 3px;
+}
+
+/* Changed text highlight for markdown viewer */
+.changed-line-highlight {
+  border-left: 3px solid rgba(250, 204, 21, 0.7);
+  padding-left: 0.5rem;
+  background-color: rgba(250, 204, 21, 0.08);
+}
+
 /* Thin scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

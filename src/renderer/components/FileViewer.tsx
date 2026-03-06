@@ -23,7 +23,7 @@ export function FileViewer() {
 
   switch (viewerType) {
     case 'markdown':
-      return <MarkdownViewer content={fileContent} />;
+      return <MarkdownViewer content={fileContent} file={selectedFile} />;
     case 'image':
       return <ImageViewer dataUrl={fileContent} fileName={selectedFile.relativePath} />;
     case 'pdf':

@@ -33,6 +33,7 @@ export interface ElectronAPI {
   openFolderByPath: (path: string) => Promise<OpenFolderResult | null>;
   getFileContent: (path: string) => Promise<string>;
   getFileDataUrl: (path: string) => Promise<string>;
+  getGitCommitted: (path: string) => Promise<string | null>;
   getGitDiff: (path: string) => Promise<FileDiffResult | null>;
   toggleStar: (path: string) => Promise<string[]>;
   getStarred: () => Promise<string[]>;

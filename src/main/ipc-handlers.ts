@@ -12,6 +12,7 @@ const IPC = {
   OPEN_FOLDER_BY_PATH: 'agent-spy:open-folder-by-path',
   GET_FILE_CONTENT: 'agent-spy:get-file-content',
   GET_FILE_DATA_URL: 'agent-spy:get-file-data-url',
+  GET_GIT_COMMITTED: 'agent-spy:get-git-committed',
   GET_GIT_DIFF: 'agent-spy:get-git-diff',
   TOGGLE_STAR: 'agent-spy:toggle-star',
   GET_STARRED: 'agent-spy:get-starred',
@@ -96,6 +97,11 @@ export function registerIpcHandlers(): void {
     const mime = MIME_TYPES[ext] ?? 'application/octet-stream';
     const buffer = await fs.promises.readFile(filePath);
     return `data:${mime};base64,${buffer.toString('base64')}`;
+  });
+
+  ipcMain.handle(IPC.GET_GIT_COMMITTED, async (_e, filePath: string) => {
+    if (!gitService) return null;
+    return gitService.getCommittedContent(filePath);
   });
 
   ipcMain.handle(IPC.GET_GIT_DIFF, async (_e, filePath: string) => {
