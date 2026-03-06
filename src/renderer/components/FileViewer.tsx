@@ -3,6 +3,8 @@ import { getViewerType } from '../lib/file-types';
 import { CodeViewer } from './CodeViewer';
 import { DiffViewer } from './DiffViewer';
 import { MarkdownViewer } from './MarkdownViewer';
+import { ImageViewer } from './ImageViewer';
+import { PdfViewer } from './PdfViewer';
 
 export function FileViewer() {
   const { selectedFile, viewMode, fileContent, diffData } = useAppStore();
@@ -22,6 +24,10 @@ export function FileViewer() {
   switch (viewerType) {
     case 'markdown':
       return <MarkdownViewer content={fileContent} />;
+    case 'image':
+      return <ImageViewer dataUrl={fileContent} fileName={selectedFile.relativePath} />;
+    case 'pdf':
+      return <PdfViewer dataUrl={fileContent} />;
     case 'code':
     default:
       return <CodeViewer file={selectedFile} content={fileContent} />;

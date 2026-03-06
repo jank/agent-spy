@@ -3,6 +3,7 @@ import { useAppStore } from './stores/app-store';
 import { Sidebar } from './components/Sidebar';
 import { MainContent } from './components/MainContent';
 import { TitleBar } from './components/TitleBar';
+import { isBinaryFile } from './lib/file-types';
 import type { WatchedFile } from './types';
 
 export default function App() {
@@ -33,6 +34,10 @@ export default function App() {
           if (store.viewMode === 'diff') {
             window.api.getGitDiff(updated.absolutePath).then((data) => {
               useAppStore.getState().setDiffData(data);
+            });
+          } else if (isBinaryFile(updated.relativePath)) {
+            window.api.getFileDataUrl(updated.absolutePath).then((dataUrl) => {
+              useAppStore.getState().setFileContent(dataUrl);
             });
           } else {
             window.api.getFileContent(updated.absolutePath).then((content) => {

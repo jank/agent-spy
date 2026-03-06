@@ -5,10 +5,13 @@ import { FileWatcherService } from './services/file-watcher-service';
 import { StarredStore } from './services/starred-store';
 import { getState, saveState } from './services/app-state';
 
+import * as path from 'node:path';
+
 const IPC = {
   OPEN_FOLDER: 'agent-spy:open-folder',
   OPEN_FOLDER_BY_PATH: 'agent-spy:open-folder-by-path',
   GET_FILE_CONTENT: 'agent-spy:get-file-content',
+  GET_FILE_DATA_URL: 'agent-spy:get-file-data-url',
   GET_GIT_DIFF: 'agent-spy:get-git-diff',
   TOGGLE_STAR: 'agent-spy:toggle-star',
   GET_STARRED: 'agent-spy:get-starred',
@@ -16,6 +19,18 @@ const IPC = {
   GET_PERSISTED_STATE: 'agent-spy:get-persisted-state',
   SAVE_SIDEBAR_WIDTH: 'agent-spy:save-sidebar-width',
 } as const;
+
+const MIME_TYPES: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+  '.ico': 'image/x-icon',
+  '.svg': 'image/svg+xml',
+  '.pdf': 'application/pdf',
+};
 
 let gitService: GitService | null = null;
 let watcherService: FileWatcherService | null = null;
@@ -74,6 +89,13 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.GET_FILE_CONTENT, async (_e, filePath: string) => {
     return fs.promises.readFile(filePath, 'utf-8');
+  });
+
+  ipcMain.handle(IPC.GET_FILE_DATA_URL, async (_e, filePath: string) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = MIME_TYPES[ext] ?? 'application/octet-stream';
+    const buffer = await fs.promises.readFile(filePath);
+    return `data:${mime};base64,${buffer.toString('base64')}`;
   });
 
   ipcMain.handle(IPC.GET_GIT_DIFF, async (_e, filePath: string) => {

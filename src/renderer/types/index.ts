@@ -20,7 +20,7 @@ export interface FileDiffResult {
 
 export type ViewMode = 'content' | 'diff';
 
-export type ViewerType = 'code' | 'markdown';
+export type ViewerType = 'code' | 'markdown' | 'image' | 'pdf' | 'binary';
 
 export interface PersistedState {
   windowBounds?: { x: number; y: number; width: number; height: number };
@@ -32,6 +32,7 @@ export interface ElectronAPI {
   openFolder: () => Promise<OpenFolderResult | null>;
   openFolderByPath: (path: string) => Promise<OpenFolderResult | null>;
   getFileContent: (path: string) => Promise<string>;
+  getFileDataUrl: (path: string) => Promise<string>;
   getGitDiff: (path: string) => Promise<FileDiffResult | null>;
   toggleStar: (path: string) => Promise<string[]>;
   getStarred: () => Promise<string[]>;

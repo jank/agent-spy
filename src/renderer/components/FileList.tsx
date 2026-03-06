@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
+import { isBinaryFile } from '../lib/file-types';
 import type { WatchedFile } from '../types';
 
 function timeAgo(ms: number): string {
@@ -35,9 +36,15 @@ function FileRow({
 
   const handleClick = () => {
     useAppStore.getState().selectFile(file);
-    window.api.getFileContent(file.absolutePath).then((content) => {
-      useAppStore.getState().setFileContent(content);
-    });
+    if (isBinaryFile(file.relativePath)) {
+      window.api.getFileDataUrl(file.absolutePath).then((dataUrl) => {
+        useAppStore.getState().setFileContent(dataUrl);
+      });
+    } else {
+      window.api.getFileContent(file.absolutePath).then((content) => {
+        useAppStore.getState().setFileContent(content);
+      });
+    }
   };
 
   const handleToggleStar = async (e: React.MouseEvent) => {
@@ -161,7 +168,7 @@ export function FileList() {
       }
 
       // Clear flash after animation
-      const timeout = setTimeout(() => setFlashSet(new Set()), 1500);
+      const timeout = setTimeout(() => setFlashSet(new Set()), 5000);
       return () => clearTimeout(timeout);
     }
   }, [files]);

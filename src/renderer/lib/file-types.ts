@@ -1,6 +1,8 @@
 import type { ViewerType } from '../types';
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdx', '.markdown']);
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg']);
+const PDF_EXTENSIONS = new Set(['.pdf']);
 
 const MONACO_LANGUAGE_MAP: Record<string, string> = {
   '.ts': 'typescript',
@@ -60,7 +62,14 @@ function getExtension(filePath: string): string {
 export function getViewerType(relativePath: string): ViewerType {
   const ext = getExtension(relativePath);
   if (MARKDOWN_EXTENSIONS.has(ext)) return 'markdown';
+  if (IMAGE_EXTENSIONS.has(ext)) return 'image';
+  if (PDF_EXTENSIONS.has(ext)) return 'pdf';
   return 'code';
+}
+
+export function isBinaryFile(relativePath: string): boolean {
+  const type = getViewerType(relativePath);
+  return type === 'image' || type === 'pdf' || type === 'binary';
 }
 
 export function getLanguageFromPath(relativePath: string): string {
