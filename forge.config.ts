@@ -15,6 +15,7 @@ const config: ForgeConfig = {
     appBundleId: 'com.agentspy.app',
     darwinDarkModeSupport: true,
     icon: './build/icon',
+    executableName: 'agent-spy',
   },
   makers: [
     new MakerZIP({}, ['darwin']),
