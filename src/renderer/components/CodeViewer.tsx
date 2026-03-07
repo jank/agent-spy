@@ -50,10 +50,27 @@ export function CodeViewer({ file, content }: Props) {
     useAppStore.getState().setScrollToLine(null);
   }, [scrollToLine]);
 
+  // Register scrollView callback for arrow key scrolling
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const cb = (delta: number) => {
+      editor.setScrollTop(editor.getScrollTop() + delta);
+    };
+    useAppStore.getState().setScrollView(cb);
+    return () => useAppStore.getState().setScrollView(null);
+  }, []);
+
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
     decorationsRef.current = [];
+
+    // Register scroll callback immediately on mount
+    const cb = (delta: number) => {
+      editor.setScrollTop(editor.getScrollTop() + delta);
+    };
+    useAppStore.getState().setScrollView(cb);
   };
 
   return (

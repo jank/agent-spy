@@ -79,10 +79,15 @@ export function HelpDialog() {
           <div>
             <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2.5">Keyboard shortcuts</h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-              <Shortcut keys="j" description="Next change" />
-              <Shortcut keys="k" description="Previous change" />
+              <Shortcut keys="h" description="Focus file list" />
+              <Shortcut keys="l" description="Focus file view" />
+              <Shortcut keys="j" description="Next file / change" />
+              <Shortcut keys="k" description="Previous file / change" />
+              <Shortcut keys="s" description="Toggle star (file list)" />
+              <Shortcut keys="d" description="Toggle diff / content" />
               <Shortcut keys="/" description="Focus filter" />
               <Shortcut keys="c" description="Toggle changed filter" />
+              <Shortcut keys="↑ ↓" description="Scroll view" />
               <Shortcut keys="?" description="Toggle help" />
               <Shortcut keys="Esc" description="Close dialog" />
             </div>

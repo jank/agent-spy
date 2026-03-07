@@ -23,7 +23,7 @@ function ThemeToggle() {
 }
 
 export function Sidebar() {
-  const { folderPath } = useAppStore();
+  const { folderPath, focusPane } = useAppStore();
   const [width, setWidth] = useState(280);
   const [search, setSearch] = useState('');
   const [changedOnly, setChangedOnly] = useState(false);
@@ -104,6 +104,9 @@ export function Sidebar() {
           />
         </div>
       )}
+
+      {/* Focus indicator */}
+      <div className={`h-[2px] transition-colors duration-200 ${focusPane === 'files' ? 'bg-blue-500' : 'bg-transparent'}`} />
 
       {/* File list */}
       <div className="flex-1 overflow-y-auto">

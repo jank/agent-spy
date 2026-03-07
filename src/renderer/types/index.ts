@@ -3,6 +3,7 @@ export interface WatchedFile {
   relativePath: string;
   modifiedMs: number;
   isGitChanged: boolean;
+  generation: number;
 }
 
 export interface OpenFolderResult {

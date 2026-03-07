@@ -72,7 +72,7 @@ function ChangeNavigation() {
 }
 
 export function MainContent() {
-  const { selectedFile, viewMode, isGitRepo, isLoading } = useAppStore();
+  const { selectedFile, viewMode, isGitRepo, isLoading, focusPane } = useAppStore();
 
   const handleViewModeChange = (mode: 'content' | 'diff') => {
     useAppStore.getState().setViewMode(mode);
@@ -127,6 +127,9 @@ export function MainContent() {
           </div>
         )}
       </div>
+
+      {/* Focus indicator */}
+      <div className={`h-[2px] transition-colors duration-200 ${focusPane === 'view' ? 'bg-blue-500' : 'bg-transparent'}`} />
 
       {/* File content */}
       <div className="flex-1 overflow-hidden">

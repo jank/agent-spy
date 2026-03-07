@@ -195,7 +195,7 @@ export function MarkdownViewer({ content, file }: Props) {
   const topDeletions = deletionsByLine.get(0);
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto bg-white dark:bg-zinc-900">
+    <div ref={containerRef} data-scroll-view className="h-full overflow-y-auto bg-white dark:bg-zinc-900">
       <div className="prose dark:prose-invert max-w-none p-6 text-zinc-900 dark:text-zinc-100 prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-th:text-zinc-900 dark:prose-th:text-zinc-100 prose-td:text-zinc-700 dark:prose-td:text-zinc-300">
         {topDeletions && topDeletions.map((texts, i) => (
           <DeletionMarker key={i} lines={texts} />

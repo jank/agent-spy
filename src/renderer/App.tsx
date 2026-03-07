@@ -37,13 +37,50 @@ export default function App() {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       switch (e.key) {
+        case 'd':
+          e.preventDefault();
+          if (store.selectedFile && store.isGitRepo) {
+            const newMode = store.viewMode === 'diff' ? 'content' : 'diff';
+            useAppStore.getState().setViewMode(newMode);
+            if (newMode === 'diff') {
+              useAppStore.getState().setLoading(true);
+              window.api.getGitDiff(store.selectedFile.absolutePath).then((data) => {
+                useAppStore.getState().setDiffData(data);
+              });
+            }
+          }
+          break;
+        case 's':
+          e.preventDefault();
+          if (store.focusPane === 'files' && store.selectedFile) {
+            window.api.toggleStar(store.selectedFile.absolutePath).then((updated) => {
+              useAppStore.getState().setStarred(updated);
+            });
+          }
+          break;
         case 'j':
           e.preventDefault();
-          store.goToNextChange?.();
+          if (store.focusPane === 'files') {
+            store.selectNextFile?.();
+          } else {
+            store.goToNextChange?.();
+          }
           break;
         case 'k':
           e.preventDefault();
-          store.goToPrevChange?.();
+          if (store.focusPane === 'files') {
+            store.selectPrevFile?.();
+          } else {
+            store.goToPrevChange?.();
+          }
+          break;
+        case 'h':
+          e.preventDefault();
+          store.setFocusPane('files');
+          break;
+        case 'l':
+          e.preventDefault();
+          store.setFocusPane('view');
           break;
         case '/':
           e.preventDefault();
@@ -53,6 +90,22 @@ export default function App() {
           e.preventDefault();
           store.toggleChangedOnly?.();
           break;
+        case 'ArrowDown':
+        case 'ArrowUp': {
+          const delta = e.key === 'ArrowDown' ? 80 : -80;
+          // Try Monaco scroll callback first, fall back to DOM scroll
+          if (store.scrollView) {
+            e.preventDefault();
+            store.scrollView(delta);
+          } else {
+            const scrollContainer = document.querySelector('[data-scroll-view]');
+            if (scrollContainer) {
+              e.preventDefault();
+              scrollContainer.scrollBy({ top: delta });
+            }
+          }
+          break;
+        }
         case '?':
           e.preventDefault();
           store.setShowHelp(!store.showHelp);
@@ -68,24 +121,32 @@ export default function App() {
       const store = useAppStore.getState();
       store.setFiles(files);
 
-      // Reload content if the currently viewed file was modified
+      // Update the selected file if it changed
       const selected = store.selectedFile;
       if (selected) {
         const updated = files.find((f) => f.absolutePath === selected.absolutePath);
-        if (updated && updated.modifiedMs !== selected.modifiedMs) {
-          useAppStore.setState({ selectedFile: updated });
-          if (store.viewMode === 'diff') {
-            window.api.getGitDiff(updated.absolutePath).then((data) => {
-              useAppStore.getState().setDiffData(data);
-            });
-          } else if (isBinaryFile(updated.relativePath)) {
-            window.api.getFileDataUrl(updated.absolutePath).then((dataUrl) => {
-              useAppStore.getState().setFileContent(dataUrl);
-            });
-          } else {
-            window.api.getFileContent(updated.absolutePath).then((content) => {
-              useAppStore.getState().setFileContent(content);
-            });
+        if (updated) {
+          const contentChanged = updated.generation !== selected.generation;
+          const gitStatusChanged = updated.isGitChanged !== selected.isGitChanged;
+
+          if (contentChanged || gitStatusChanged) {
+            useAppStore.setState({ selectedFile: updated });
+          }
+
+          if (contentChanged) {
+            if (store.viewMode === 'diff') {
+              window.api.getGitDiff(updated.absolutePath).then((data) => {
+                useAppStore.getState().setDiffData(data);
+              });
+            } else if (isBinaryFile(updated.relativePath)) {
+              window.api.getFileDataUrl(updated.absolutePath).then((dataUrl) => {
+                useAppStore.getState().setFileContent(dataUrl);
+              });
+            } else {
+              window.api.getFileContent(updated.absolutePath).then((content) => {
+                useAppStore.getState().setFileContent(content);
+              });
+            }
           }
         }
       }

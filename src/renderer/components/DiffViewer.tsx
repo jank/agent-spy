@@ -15,8 +15,27 @@ export function DiffViewer({ file, diffData }: Props) {
   const scrollToLine = useAppStore((s) => s.scrollToLine);
   const diffEditorRef = useRef<any>(null);
 
+  // Register scrollView callback for arrow key scrolling
+  useEffect(() => {
+    const editor = diffEditorRef.current;
+    if (!editor) return;
+    const mod = editor.getModifiedEditor();
+    const cb = (delta: number) => {
+      mod.setScrollTop(mod.getScrollTop() + delta);
+    };
+    useAppStore.getState().setScrollView(cb);
+    return () => useAppStore.getState().setScrollView(null);
+  }, []);
+
   const handleMount: DiffOnMount = (editor) => {
     diffEditorRef.current = editor;
+
+    // Register scroll callback
+    const mod = editor.getModifiedEditor();
+    const cb = (delta: number) => {
+      mod.setScrollTop(mod.getScrollTop() + delta);
+    };
+    useAppStore.getState().setScrollView(cb);
 
     // Auto-scroll to first diff after a short delay for the diff to compute
     setTimeout(() => {

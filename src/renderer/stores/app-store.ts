@@ -27,13 +27,22 @@ interface AppState {
   showHelp: boolean;
   setShowHelp: (show: boolean) => void;
 
+  focusPane: 'files' | 'view';
+  setFocusPane: (pane: 'files' | 'view') => void;
+
   // Imperative callbacks registered by components
   goToNextChange: (() => void) | null;
   goToPrevChange: (() => void) | null;
+  selectNextFile: (() => void) | null;
+  selectPrevFile: (() => void) | null;
   focusFilter: (() => void) | null;
   toggleChangedOnly: (() => void) | null;
+  scrollView: ((delta: number) => void) | null;
+  setScrollView: (cb: ((delta: number) => void) | null) => void;
   setGoToNextChange: (cb: (() => void) | null) => void;
   setGoToPrevChange: (cb: (() => void) | null) => void;
+  setSelectNextFile: (cb: (() => void) | null) => void;
+  setSelectPrevFile: (cb: (() => void) | null) => void;
   setFocusFilter: (cb: (() => void) | null) => void;
   setToggleChangedOnly: (cb: (() => void) | null) => void;
 }
@@ -82,12 +91,21 @@ export const useAppStore = create<AppState>((set) => ({
   showHelp: false,
   setShowHelp: (showHelp) => set({ showHelp }),
 
+  focusPane: 'files' as const,
+  setFocusPane: (focusPane) => set({ focusPane }),
+
+  scrollView: null,
+  setScrollView: (cb) => set({ scrollView: cb }),
   goToNextChange: null,
   goToPrevChange: null,
+  selectNextFile: null,
+  selectPrevFile: null,
   focusFilter: null,
   toggleChangedOnly: null,
   setGoToNextChange: (cb) => set({ goToNextChange: cb }),
   setGoToPrevChange: (cb) => set({ goToPrevChange: cb }),
+  setSelectNextFile: (cb) => set({ selectNextFile: cb }),
+  setSelectPrevFile: (cb) => set({ selectPrevFile: cb }),
   setFocusFilter: (cb) => set({ focusFilter: cb }),
   setToggleChangedOnly: (cb) => set({ toggleChangedOnly: cb }),
 }));

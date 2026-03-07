@@ -8,6 +8,8 @@ export interface WatchedFile {
   relativePath: string;
   modifiedMs: number;
   isGitChanged: boolean;
+  /** Monotonically increasing counter — bumped on every file change event */
+  generation: number;
 }
 
 export class FileWatcherService {
@@ -76,11 +78,13 @@ export class FileWatcherService {
       const stat = fs.statSync(absolutePath);
       if (stat.isDirectory()) return;
 
+      const existing = this.files.get(absolutePath);
       this.files.set(absolutePath, {
         absolutePath,
         relativePath,
         modifiedMs: stat.mtimeMs,
         isGitChanged: this.gitChangedFiles.has(relativePath),
+        generation: (existing?.generation ?? 0) + 1,
       });
     } catch {
       return;

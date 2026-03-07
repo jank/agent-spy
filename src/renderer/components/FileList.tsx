@@ -35,16 +35,7 @@ function FileRow({
   }, [flashing, file.modifiedMs]);
 
   const handleClick = () => {
-    useAppStore.getState().selectFile(file);
-    if (isBinaryFile(file.relativePath)) {
-      window.api.getFileDataUrl(file.absolutePath).then((dataUrl) => {
-        useAppStore.getState().setFileContent(dataUrl);
-      });
-    } else {
-      window.api.getFileContent(file.absolutePath).then((content) => {
-        useAppStore.getState().setFileContent(content);
-      });
-    }
+    selectFileByObject(file);
   };
 
   const handleToggleStar = async (e: React.MouseEvent) => {
@@ -102,8 +93,22 @@ function FileRow({
 /**
  * Animated file list using FLIP technique for smooth reordering.
  */
+function selectFileByObject(file: WatchedFile) {
+  useAppStore.getState().selectFile(file);
+  if (isBinaryFile(file.relativePath)) {
+    window.api.getFileDataUrl(file.absolutePath).then((dataUrl) => {
+      useAppStore.getState().setFileContent(dataUrl);
+    });
+  } else {
+    window.api.getFileContent(file.absolutePath).then((content) => {
+      useAppStore.getState().setFileContent(content);
+    });
+  }
+}
+
 export function FileList({ filter, changedOnly }: { filter: string; changedOnly: boolean }) {
-  const { files, starred } = useAppStore();
+  const files = useAppStore((s) => s.files);
+  const starred = useAppStore((s) => s.starred);
   const [flashSet, setFlashSet] = useState<Set<string>>(new Set());
   const prevModifiedRef = useRef<Map<string, number>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,6 +123,36 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
   }
   const starredFiles = filtered.filter((f) => starred.includes(f.absolutePath));
   const otherFiles = filtered.filter((f) => !starred.includes(f.absolutePath));
+
+  // Ordered list for keyboard navigation: starred first, then others
+  const orderedFilesRef = useRef<WatchedFile[]>([]);
+  orderedFilesRef.current = [...starredFiles, ...otherFiles];
+
+  // Register file navigation callbacks once
+  useEffect(() => {
+    const selectNext = () => {
+      const ordered = orderedFilesRef.current;
+      if (ordered.length === 0) return;
+      const selected = useAppStore.getState().selectedFile;
+      const idx = selected ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath) : -1;
+      const next = ordered[Math.min(idx + 1, ordered.length - 1)];
+      selectFileByObject(next);
+    };
+    const selectPrev = () => {
+      const ordered = orderedFilesRef.current;
+      if (ordered.length === 0) return;
+      const selected = useAppStore.getState().selectedFile;
+      const idx = selected ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath) : ordered.length;
+      const prev = ordered[Math.max(idx - 1, 0)];
+      selectFileByObject(prev);
+    };
+    useAppStore.getState().setSelectNextFile(selectNext);
+    useAppStore.getState().setSelectPrevFile(selectPrev);
+    return () => {
+      useAppStore.getState().setSelectNextFile(null);
+      useAppStore.getState().setSelectPrevFile(null);
+    };
+  }, []);
 
   // Before DOM update: capture current positions (only when files change)
   useLayoutEffect(() => {
