@@ -12,12 +12,16 @@ export interface WatchedFile {
 
 export class FileWatcherService {
   private watcher: FSWatcher | null = null;
+  private gitWatcher: FSWatcher | null = null;
   private ig: Ignore;
   private files = new Map<string, WatchedFile>();
   private callback: ((files: WatchedFile[]) => void) | null = null;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private gitDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private gitChangedFiles = new Set<string>();
   private refreshGitStatus: (() => Promise<Set<string>>) | null = null;
+  private isReady = false;
+  private closed = false;
 
   constructor(private rootPath: string) {
     this.ig = ignore();
@@ -63,6 +67,7 @@ export class FileWatcherService {
     this.watcher.on('add', (fp) => this.trackFile(fp));
     this.watcher.on('change', (fp) => this.trackFile(fp));
     this.watcher.on('unlink', (fp) => this.removeFile(fp));
+    this.watcher.on('ready', () => { this.isReady = true; });
   }
 
   private trackFile(absolutePath: string): void {
@@ -80,19 +85,26 @@ export class FileWatcherService {
     } catch {
       return;
     }
-    this.emitDebounced();
+    // Only emit changes after the initial scan is complete
+    if (this.isReady) {
+      this.emitDebounced();
+    }
   }
 
   private removeFile(absolutePath: string): void {
     this.files.delete(absolutePath);
-    this.emitDebounced();
+    if (this.isReady) {
+      this.emitDebounced();
+    }
   }
 
   private emitDebounced(): void {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(async () => {
+      if (this.closed) return;
       if (this.refreshGitStatus) {
         const changed = await this.refreshGitStatus();
+        if (this.closed) return;
         this.setGitChangedFiles(changed);
       }
       this.callback?.(this.getSortedFiles());
@@ -108,6 +120,34 @@ export class FileWatcherService {
     this.callback = cb;
   }
 
+  /** Watch .git internals for commits, checkouts, rebases, etc. */
+  startGitWatching(): void {
+    const gitDir = path.join(this.rootPath, '.git');
+    // Watch the git index and refs — these change on commit, checkout, rebase, merge, etc.
+    this.gitWatcher = watch(
+      [path.join(gitDir, 'index'), path.join(gitDir, 'refs')],
+      { persistent: true, ignoreInitial: true, depth: 5 },
+    );
+
+    const onGitChange = () => {
+      if (!this.isReady || this.closed) return;
+      if (this.gitDebounceTimer) clearTimeout(this.gitDebounceTimer);
+      this.gitDebounceTimer = setTimeout(async () => {
+        if (this.closed) return;
+        if (this.refreshGitStatus) {
+          const changed = await this.refreshGitStatus();
+          if (this.closed) return;
+          this.setGitChangedFiles(changed);
+        }
+        this.callback?.(this.getSortedFiles());
+      }, 500);
+    };
+
+    this.gitWatcher.on('add', onGitChange);
+    this.gitWatcher.on('change', onGitChange);
+    this.gitWatcher.on('unlink', onGitChange);
+  }
+
   getInitialFiles(): Promise<WatchedFile[]> {
     return new Promise((resolve) => {
       this.watcher?.on('ready', () => resolve(this.getSortedFiles()));
@@ -115,8 +155,12 @@ export class FileWatcherService {
   }
 
   close(): void {
+    this.closed = true;
+    this.callback = null;
     this.watcher?.close();
+    this.gitWatcher?.close();
     this.files.clear();
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    if (this.gitDebounceTimer) clearTimeout(this.gitDebounceTimer);
   }
 }

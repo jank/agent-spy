@@ -42,6 +42,15 @@ export function TitleBar() {
           Open Folder...
         </button>
       )}
+
+      <div className="flex-1" />
+      <button
+        onClick={() => useAppStore.getState().setShowHelp(true)}
+        className="app-no-drag shrink-0 px-2 py-0.5 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 rounded transition-colors"
+        title="Help (?)"
+      >
+        Help ?
+      </button>
     </div>
   );
 }

@@ -24,6 +24,8 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setChangedLines: (lines: number[]) => void;
   setScrollToLine: (line: number | null) => void;
+  showHelp: boolean;
+  setShowHelp: (show: boolean) => void;
 
   // Imperative callbacks registered by components
   goToNextChange: (() => void) | null;
@@ -77,6 +79,8 @@ export const useAppStore = create<AppState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
   setChangedLines: (changedLines) => set({ changedLines }),
   setScrollToLine: (scrollToLine) => set({ scrollToLine }),
+  showHelp: false,
+  setShowHelp: (showHelp) => set({ showHelp }),
 
   goToNextChange: null,
   goToPrevChange: null,

@@ -3,6 +3,7 @@ import { useAppStore } from './stores/app-store';
 import { Sidebar } from './components/Sidebar';
 import { MainContent } from './components/MainContent';
 import { TitleBar } from './components/TitleBar';
+import { HelpDialog } from './components/HelpDialog';
 import { isBinaryFile } from './lib/file-types';
 import type { WatchedFile } from './types';
 
@@ -23,11 +24,18 @@ export default function App() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Skip when typing in an input/textarea
+      const store = useAppStore.getState();
+
+      // Escape closes help dialog from anywhere
+      if (e.key === 'Escape' && store.showHelp) {
+        e.preventDefault();
+        store.setShowHelp(false);
+        return;
+      }
+
+      // Skip other shortcuts when typing in an input/textarea
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
-      const store = useAppStore.getState();
       switch (e.key) {
         case 'j':
           e.preventDefault();
@@ -44,6 +52,10 @@ export default function App() {
         case 'c':
           e.preventDefault();
           store.toggleChangedOnly?.();
+          break;
+        case '?':
+          e.preventDefault();
+          store.setShowHelp(!store.showHelp);
           break;
       }
     };
@@ -88,6 +100,7 @@ export default function App() {
         <Sidebar />
         <MainContent />
       </div>
+      <HelpDialog />
     </div>
   );
 }

@@ -83,6 +83,17 @@ export function Sidebar() {
       {/* Search */}
       {folderPath && (
         <div className="px-3 py-2 flex gap-1.5">
+          <button
+            onClick={() => setChangedOnly((v) => !v)}
+            className={`app-no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
+              changedOnly
+                ? 'bg-amber-500/20 dark:bg-amber-500/25'
+                : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50'
+            }`}
+            title={changedOnly ? 'Show all files (c)' : 'Show changed files only (c)'}
+          >
+            <span className={`w-2 h-2 rounded-full ${changedOnly ? 'bg-amber-500' : 'bg-zinc-400 dark:bg-zinc-500'}`} />
+          </button>
           <input
             ref={filterRef}
             type="text"
@@ -91,17 +102,6 @@ export function Sidebar() {
             placeholder="Filter files..."
             className="app-no-drag flex-1 min-w-0 px-2 py-1 text-sm rounded-md bg-zinc-200/70 dark:bg-zinc-700/70 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:ring-1 focus:ring-blue-500/50"
           />
-          <button
-            onClick={() => setChangedOnly((v) => !v)}
-            className={`app-no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
-              changedOnly
-                ? 'bg-amber-500/20 dark:bg-amber-500/25'
-                : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50'
-            }`}
-            title={changedOnly ? 'Show all files' : 'Show changed files only'}
-          >
-            <span className={`w-2 h-2 rounded-full ${changedOnly ? 'bg-amber-500' : 'bg-zinc-400 dark:bg-zinc-500'}`} />
-          </button>
         </div>
       )}
 
