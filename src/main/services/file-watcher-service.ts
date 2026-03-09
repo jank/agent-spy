@@ -69,7 +69,9 @@ export class FileWatcherService {
     this.watcher.on('add', (fp) => this.trackFile(fp));
     this.watcher.on('change', (fp) => this.trackFile(fp));
     this.watcher.on('unlink', (fp) => this.removeFile(fp));
-    this.watcher.on('ready', () => { this.isReady = true; });
+    this.watcher.on('ready', () => {
+      this.isReady = true;
+    });
   }
 
   private trackFile(absolutePath: string): void {
@@ -116,8 +118,7 @@ export class FileWatcherService {
   }
 
   private getSortedFiles(): WatchedFile[] {
-    return Array.from(this.files.values())
-      .sort((a, b) => b.modifiedMs - a.modifiedMs);
+    return Array.from(this.files.values()).sort((a, b) => b.modifiedMs - a.modifiedMs);
   }
 
   onChange(cb: (files: WatchedFile[]) => void): void {
@@ -128,10 +129,11 @@ export class FileWatcherService {
   startGitWatching(): void {
     const gitDir = path.join(this.rootPath, '.git');
     // Watch the git index and refs — these change on commit, checkout, rebase, merge, etc.
-    this.gitWatcher = watch(
-      [path.join(gitDir, 'index'), path.join(gitDir, 'refs')],
-      { persistent: true, ignoreInitial: true, depth: 5 },
-    );
+    this.gitWatcher = watch([path.join(gitDir, 'index'), path.join(gitDir, 'refs')], {
+      persistent: true,
+      ignoreInitial: true,
+      depth: 5,
+    });
 
     const onGitChange = () => {
       if (!this.isReady || this.closed) return;

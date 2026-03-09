@@ -12,7 +12,15 @@ function Shortcut({ keys, description }: { keys: string; description: string }) 
   );
 }
 
-function Feature({ emoji, title, description }: { emoji: string; title: string; description: string }) {
+function Feature({
+  emoji,
+  title,
+  description,
+}: {
+  emoji: string;
+  title: string;
+  description: string;
+}) {
   return (
     <div className="flex gap-2.5">
       <span className="text-base leading-5 shrink-0">{emoji}</span>
@@ -40,11 +48,7 @@ export function HelpDialog() {
       >
         {/* Header with icon */}
         <div className="bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 px-6 pt-6 pb-5 flex items-center gap-4">
-          <img
-            src={iconUrl}
-            alt="Agent Spy"
-            className="w-16 h-16 rounded-xl shadow-lg"
-          />
+          <img src={iconUrl} alt="Agent Spy" className="w-16 h-16 rounded-xl shadow-lg" />
           <div>
             <h2 className="text-xl font-bold">Agent Spy</h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -56,28 +60,61 @@ export function HelpDialog() {
         <div className="px-6 py-5 space-y-5">
           {/* Description */}
           <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-            Agent Spy lets you monitor and verify file changes made by AI agents in real time.
-            It watches your project folder, highlights exactly what changed, and shows diffs against the last committed version.
-            Stay in control of your codebase while AI agents work alongside you.
+            Agent Spy lets you monitor and verify file changes made by AI agents in real time. It
+            watches your project folder, highlights exactly what changed, and shows diffs against
+            the last committed version. Stay in control of your codebase while AI agents work
+            alongside you.
           </p>
 
           {/* Features */}
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2.5">Features</h3>
+            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2.5">
+              Features
+            </h3>
             <div className="space-y-2">
-              <Feature emoji="👁️" title="Live file watching" description="see changes the moment they happen" />
-              <Feature emoji="🟡" title="Git change indicators" description="yellow markers show which files differ from the last commit" />
-              <Feature emoji="✨" title="Inline highlighting" description="changed lines are highlighted in code and markdown" />
-              <Feature emoji="🔀" title="Side-by-side diff" description="compare current file against the committed version" />
-              <Feature emoji="⬆️⬇️" title="Change navigation" description="step through changes one by one" />
-              <Feature emoji="🔍" title="Changed files filter" description="focus on only the files that were modified" />
-              <Feature emoji="⭐" title="Star files" description="pin important files to the top of the list" />
+              <Feature
+                emoji="👁️"
+                title="Live file watching"
+                description="see changes the moment they happen"
+              />
+              <Feature
+                emoji="🟡"
+                title="Git change indicators"
+                description="yellow markers show which files differ from the last commit"
+              />
+              <Feature
+                emoji="✨"
+                title="Inline highlighting"
+                description="changed lines are highlighted in code and markdown"
+              />
+              <Feature
+                emoji="🔀"
+                title="Side-by-side diff"
+                description="compare current file against the committed version"
+              />
+              <Feature
+                emoji="⬆️⬇️"
+                title="Change navigation"
+                description="step through changes one by one"
+              />
+              <Feature
+                emoji="🔍"
+                title="Changed files filter"
+                description="focus on only the files that were modified"
+              />
+              <Feature
+                emoji="⭐"
+                title="Star files"
+                description="pin important files to the top of the list"
+              />
             </div>
           </div>
 
           {/* Shortcuts */}
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2.5">Keyboard shortcuts</h3>
+            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2.5">
+              Keyboard shortcuts
+            </h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
               <Shortcut keys="h" description="Focus file list" />
               <Shortcut keys="l" description="Focus file view" />

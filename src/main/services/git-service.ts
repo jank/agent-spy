@@ -28,7 +28,12 @@ export class GitService {
     try {
       const status = await this.git.status();
       const changed = new Set<string>();
-      for (const f of [...status.modified, ...status.created, ...status.not_added, ...status.renamed.map(r => r.to)]) {
+      for (const f of [
+        ...status.modified,
+        ...status.created,
+        ...status.not_added,
+        ...status.renamed.map((r) => r.to),
+      ]) {
         changed.add(f);
       }
       return changed;

@@ -1,7 +1,16 @@
 import type { ViewerType } from '../types';
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdx', '.markdown']);
-const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg']);
+const IMAGE_EXTENSIONS = new Set([
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.bmp',
+  '.ico',
+  '.svg',
+]);
 const PDF_EXTENSIONS = new Set(['.pdf']);
 
 const MONACO_LANGUAGE_MAP: Record<string, string> = {

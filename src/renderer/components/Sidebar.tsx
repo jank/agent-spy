@@ -5,8 +5,8 @@ import { FileList } from './FileList';
 
 const THEME_ICONS: Record<string, string> = {
   system: '\u25D1', // ◑
-  light: '\u2600',  // ☀
-  dark: '\u263E',   // ☾
+  light: '\u2600', // ☀
+  dark: '\u263E', // ☾
 };
 
 function ThemeToggle() {
@@ -92,7 +92,9 @@ export function Sidebar() {
             }`}
             title={changedOnly ? 'Show all files (c)' : 'Show changed files only (c)'}
           >
-            <span className={`w-2 h-2 rounded-full ${changedOnly ? 'bg-amber-500' : 'bg-zinc-400 dark:bg-zinc-500'}`} />
+            <span
+              className={`w-2 h-2 rounded-full ${changedOnly ? 'bg-amber-500' : 'bg-zinc-400 dark:bg-zinc-500'}`}
+            />
           </button>
           <input
             ref={filterRef}
@@ -106,7 +108,9 @@ export function Sidebar() {
       )}
 
       {/* Focus indicator */}
-      <div className={`h-[2px] transition-colors duration-200 ${focusPane === 'files' ? 'bg-blue-500' : 'bg-transparent'}`} />
+      <div
+        className={`h-[2px] transition-colors duration-200 ${focusPane === 'files' ? 'bg-blue-500' : 'bg-transparent'}`}
+      />
 
       {/* File list */}
       <div className="flex-1 overflow-y-auto">

@@ -11,7 +11,10 @@ import type { WatchedFile } from '../types';
 export function useDetailedChanges(file: WatchedFile, content: string): LineChange[] {
   const isGitRepo = useAppStore((s) => s.isGitRepo);
   const [changes, setChanges] = useState<LineChange[]>([]);
-  const committedRef = useRef<{ path: string; content: string | null }>({ path: '', content: null });
+  const committedRef = useRef<{ path: string; content: string | null }>({
+    path: '',
+    content: null,
+  });
 
   const updateChanges = (c: LineChange[]) => {
     setChanges(c);
@@ -42,7 +45,9 @@ export function useDetailedChanges(file: WatchedFile, content: string): LineChan
         updateChanges([]);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [file.absolutePath, file.isGitChanged, isGitRepo]);
 
   useEffect(() => {

@@ -22,7 +22,9 @@ describe('StarredStore', () => {
     });
 
     it('starts empty when file does not exist', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const store = new StarredStore('/project');
       expect(store.getStarred()).toEqual([]);
     });
@@ -36,7 +38,9 @@ describe('StarredStore', () => {
 
   describe('toggle', () => {
     it('adds a file when not starred', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const store = new StarredStore('/project');
       const result = store.toggle('/file.ts');
       expect(result).toEqual(['/file.ts']);
@@ -50,10 +54,14 @@ describe('StarredStore', () => {
     });
 
     it('saves to disk after toggling', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const store = new StarredStore('/project');
       store.toggle('/file.ts');
-      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('.agent-spy'), { recursive: true });
+      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('.agent-spy'), {
+        recursive: true,
+      });
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining('starred.json'),
         expect.any(String),
@@ -61,7 +69,9 @@ describe('StarredStore', () => {
     });
 
     it('persists correct JSON content', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const store = new StarredStore('/project');
       store.toggle('/a.ts');
       store.toggle('/b.ts');

@@ -30,7 +30,9 @@ import * as fs from 'node:fs';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+  (fs.readFileSync as any).mockImplementation(() => {
+    throw new Error('ENOENT');
+  });
 });
 
 describe('FileWatcherService', () => {
@@ -44,7 +46,9 @@ describe('FileWatcherService', () => {
     });
 
     it('handles missing .gitignore gracefully', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       expect(() => new FileWatcherService('/project')).not.toThrow();
       // .git and node_modules should still be added
       expect(mockIgnoreInstance.add).toHaveBeenCalledWith('.git');
@@ -54,7 +58,9 @@ describe('FileWatcherService', () => {
 
   describe('setGitChangedFiles', () => {
     it('updates isGitChanged on tracked files', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const service = new FileWatcherService('/project');
 
       // Manually add a file to the internal map via reflection
@@ -72,7 +78,9 @@ describe('FileWatcherService', () => {
     });
 
     it('clears isGitChanged when file is no longer changed', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const service = new FileWatcherService('/project');
       const filesMap = (service as any).files as Map<string, WatchedFile>;
       filesMap.set('/project/a.ts', {
@@ -90,7 +98,9 @@ describe('FileWatcherService', () => {
 
   describe('close', () => {
     it('cleans up watchers and state', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const service = new FileWatcherService('/project');
       service.startWatching();
       service.close();
@@ -104,7 +114,9 @@ describe('FileWatcherService', () => {
 
   describe('onChange', () => {
     it('registers a callback', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const service = new FileWatcherService('/project');
       const cb = vi.fn();
       service.onChange(cb);
@@ -114,7 +126,9 @@ describe('FileWatcherService', () => {
 
   describe('getSortedFiles (via reflection)', () => {
     it('sorts files by modifiedMs descending', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const service = new FileWatcherService('/project');
       const filesMap = (service as any).files as Map<string, WatchedFile>;
 

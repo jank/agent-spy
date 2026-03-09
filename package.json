@@ -11,7 +11,12 @@
     "make": "electron-forge make",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx}' '*.{json,mjs,mts}'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx}' '*.{json,mjs,mts}'",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": {
@@ -36,9 +41,16 @@
     "@tailwindcss/vite": "^4.2.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
     "electron": "40.8.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.8.1",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
@@ -55,6 +67,15 @@
     "react-dom": "^19.2.4",
     "simple-git": "^3.32.3",
     "zustand": "^5.0.11"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml,md,mjs,mts}": [
+      "prettier --write"
+    ]
   },
   "overrides": {
     "tar": "^7.5.10",

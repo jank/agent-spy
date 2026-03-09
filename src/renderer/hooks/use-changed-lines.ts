@@ -11,7 +11,10 @@ import type { WatchedFile } from '../types';
 export function useChangedLines(file: WatchedFile, content: string): number[] {
   const isGitRepo = useAppStore((s) => s.isGitRepo);
   const [changedLines, setChangedLines] = useState<number[]>([]);
-  const committedRef = useRef<{ path: string; content: string | null }>({ path: '', content: null });
+  const committedRef = useRef<{ path: string; content: string | null }>({
+    path: '',
+    content: null,
+  });
 
   const updateLines = (lines: number[]) => {
     setChangedLines(lines);
@@ -39,7 +42,9 @@ export function useChangedLines(file: WatchedFile, content: string): number[] {
         updateLines([]);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [file.absolutePath, file.isGitChanged, isGitRepo]);
 
   // Recompute diff when content changes (using cached committed content)

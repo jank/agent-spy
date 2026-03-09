@@ -8,11 +8,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: [
-        'src/renderer/lib/**',
-        'src/renderer/stores/**',
-        'src/main/services/**',
-      ],
+      include: ['src/renderer/lib/**', 'src/renderer/stores/**', 'src/main/services/**'],
     },
   },
   resolve: {

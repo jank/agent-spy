@@ -14,14 +14,18 @@ import { loadState, saveState, getState } from '../../../main/services/app-state
 beforeEach(() => {
   vi.clearAllMocks();
   // Reset module-level state by loading empty
-  (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+  (fs.readFileSync as any).mockImplementation(() => {
+    throw new Error('ENOENT');
+  });
   loadState();
 });
 
 describe('app-state', () => {
   describe('loadState', () => {
     it('returns empty object when file does not exist', () => {
-      (fs.readFileSync as any).mockImplementation(() => { throw new Error('ENOENT'); });
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
       const result = loadState();
       expect(result).toEqual({});
     });
@@ -73,7 +77,9 @@ describe('app-state', () => {
     });
 
     it('does not throw on write error', () => {
-      (fs.writeFileSync as any).mockImplementation(() => { throw new Error('EPERM'); });
+      (fs.writeFileSync as any).mockImplementation(() => {
+        throw new Error('EPERM');
+      });
       expect(() => saveState({ sidebarWidth: 300 })).not.toThrow();
     });
   });

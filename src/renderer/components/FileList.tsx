@@ -14,13 +14,7 @@ function timeAgo(ms: number): string {
   return `${days}d ago`;
 }
 
-function FileRow({
-  file,
-  flashing,
-}: {
-  file: WatchedFile;
-  flashing: boolean;
-}) {
+function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
   const { selectedFile, starred } = useAppStore();
   const isSelected = selectedFile?.absolutePath === file.absolutePath;
   const isStarred = starred.includes(file.absolutePath);
@@ -56,16 +50,11 @@ function FileRow({
     >
       {/* Flash overlay */}
       {flashing && (
-        <div
-          key={flashKey}
-          className="absolute inset-0 file-flash pointer-events-none"
-        />
+        <div key={flashKey} className="absolute inset-0 file-flash pointer-events-none" />
       )}
 
       {/* Git change indicator */}
-      {file.isGitChanged && (
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-      )}
+      {file.isGitChanged && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
       {!file.isGitChanged && <span className="w-1.5 shrink-0" />}
 
       {/* File name */}
@@ -74,9 +63,7 @@ function FileRow({
       </span>
 
       {/* Time */}
-      <span className="text-[10px] text-zinc-400 shrink-0">
-        {timeAgo(file.modifiedMs)}
-      </span>
+      <span className="text-[10px] text-zinc-400 shrink-0">{timeAgo(file.modifiedMs)}</span>
 
       {/* Star button */}
       <button
@@ -134,7 +121,9 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
       const ordered = orderedFilesRef.current;
       if (ordered.length === 0) return;
       const selected = useAppStore.getState().selectedFile;
-      const idx = selected ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath) : -1;
+      const idx = selected
+        ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath)
+        : -1;
       const next = ordered[Math.min(idx + 1, ordered.length - 1)];
       selectFileByObject(next);
     };
@@ -142,7 +131,9 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
       const ordered = orderedFilesRef.current;
       if (ordered.length === 0) return;
       const selected = useAppStore.getState().selectedFile;
-      const idx = selected ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath) : ordered.length;
+      const idx = selected
+        ? ordered.findIndex((f) => f.absolutePath === selected.absolutePath)
+        : ordered.length;
       const prev = ordered[Math.max(idx - 1, 0)];
       selectFileByObject(prev);
     };

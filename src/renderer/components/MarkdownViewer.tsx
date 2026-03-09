@@ -5,7 +5,6 @@ import rehypeRaw from 'rehype-raw';
 import { useDetailedChanges } from '../hooks/use-detailed-changes';
 import { useAppStore } from '../stores/app-store';
 import type { WatchedFile } from '../types';
-import type { LineChange } from '../lib/diff-utils';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
 
@@ -84,7 +83,10 @@ function DeletionMarker({ lines }: { lines: string[] }) {
         Deleted:
       </div>
       {lines.map((line, i) => (
-        <div key={i} className="text-sm text-red-600/70 dark:text-red-400/70 line-through font-mono whitespace-pre-wrap">
+        <div
+          key={i}
+          className="text-sm text-red-600/70 dark:text-red-400/70 line-through font-mono whitespace-pre-wrap"
+        >
           {line || '\u00A0'}
         </div>
       ))}
@@ -162,11 +164,15 @@ export function MarkdownViewer({ content, file }: Props) {
     if (!containerRef.current || deletionsByLine.size === 0) return;
 
     // Remove previously injected deletion markers
-    containerRef.current.querySelectorAll('.changed-line-deleted-block').forEach((el) => el.remove());
+    containerRef.current
+      .querySelectorAll('.changed-line-deleted-block')
+      .forEach((el) => el.remove());
 
     // For each deletion position, find the element with data-deletion-after and insert after it
     for (const [line, textGroups] of deletionsByLine) {
-      const anchor = containerRef.current.querySelector<HTMLElement>(`[data-deletion-after="${line}"]`);
+      const anchor = containerRef.current.querySelector<HTMLElement>(
+        `[data-deletion-after="${line}"]`,
+      );
       if (!anchor) continue;
 
       for (const texts of textGroups) {
@@ -181,7 +187,8 @@ export function MarkdownViewer({ content, file }: Props) {
 
         for (const textLine of texts) {
           const lineEl = document.createElement('div');
-          lineEl.className = 'text-sm text-red-600/70 dark:text-red-400/70 line-through font-mono whitespace-pre-wrap';
+          lineEl.className =
+            'text-sm text-red-600/70 dark:text-red-400/70 line-through font-mono whitespace-pre-wrap';
           lineEl.textContent = textLine || '\u00A0';
           marker.appendChild(lineEl);
         }
@@ -195,11 +202,13 @@ export function MarkdownViewer({ content, file }: Props) {
   const topDeletions = deletionsByLine.get(0);
 
   return (
-    <div ref={containerRef} data-scroll-view className="h-full overflow-y-auto bg-white dark:bg-zinc-900">
+    <div
+      ref={containerRef}
+      data-scroll-view
+      className="h-full overflow-y-auto bg-white dark:bg-zinc-900"
+    >
       <div className="prose dark:prose-invert max-w-none p-6 text-zinc-900 dark:text-zinc-100 prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-th:text-zinc-900 dark:prose-th:text-zinc-100 prose-td:text-zinc-700 dark:prose-td:text-zinc-300">
-        {topDeletions && topDeletions.map((texts, i) => (
-          <DeletionMarker key={i} lines={texts} />
-        ))}
+        {topDeletions && topDeletions.map((texts, i) => <DeletionMarker key={i} lines={texts} />)}
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw, highlightPlugin]}

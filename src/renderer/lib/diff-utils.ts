@@ -50,7 +50,8 @@ export function computeChangedLines(oldText: string, newText: string): number[] 
 
   // Backtrack to find which new lines are in the LCS
   const unchangedNewLines = new Set<number>();
-  let i = m, j = n;
+  let i = m,
+    j = n;
   while (i > 0 && j > 0) {
     if (oldLines[i - 1] === newLines[j - 1]) {
       unchangedNewLines.add(j);
@@ -118,11 +119,13 @@ export function computeDetailedChanges(oldText: string, newText: string): LineCh
   // Walk the DP table to produce an edit script
   // Collect edits in reverse, then reverse at the end
   const edits: Array<{ type: 'keep' | 'delete' | 'insert'; oldIdx?: number; newIdx?: number }> = [];
-  let i = m, j = n;
+  let i = m,
+    j = n;
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
       edits.push({ type: 'keep', oldIdx: i, newIdx: j });
-      i--; j--;
+      i--;
+      j--;
     } else if (i > 0 && (j === 0 || dp[i - 1][j] >= dp[i][j - 1])) {
       edits.push({ type: 'delete', oldIdx: i });
       i--;
@@ -170,9 +173,12 @@ export function computeDetailedChanges(oldText: string, newText: string): LineCh
       }
       // Excess deletes
       if (deletedLines.length > paired) {
-        const afterLine = insertedNewLines.length > 0
-          ? insertedNewLines[insertedNewLines.length - 1]
-          : (deleteStart > 0 && edits[deleteStart - 1].newIdx ? edits[deleteStart - 1].newIdx! : 0);
+        const afterLine =
+          insertedNewLines.length > 0
+            ? insertedNewLines[insertedNewLines.length - 1]
+            : deleteStart > 0 && edits[deleteStart - 1].newIdx
+              ? edits[deleteStart - 1].newIdx!
+              : 0;
         changes.push({
           line: afterLine,
           type: 'deleted',
@@ -181,9 +187,8 @@ export function computeDetailedChanges(oldText: string, newText: string): LineCh
       }
     } else if (deletedLines.length > 0) {
       // Pure deletion — find the new-text line after which these were deleted
-      const afterLine = deleteStart > 0 && edits[deleteStart - 1].newIdx
-        ? edits[deleteStart - 1].newIdx!
-        : 0;
+      const afterLine =
+        deleteStart > 0 && edits[deleteStart - 1].newIdx ? edits[deleteStart - 1].newIdx! : 0;
       changes.push({
         line: afterLine,
         type: 'deleted',

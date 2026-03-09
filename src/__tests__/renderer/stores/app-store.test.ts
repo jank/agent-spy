@@ -72,7 +72,11 @@ describe('app-store', () => {
     });
 
     it('clears selected file and content when folder changes', () => {
-      useAppStore.setState({ selectedFile: mockFile, fileContent: 'old', diffData: { original: '', modified: '', isNew: false } });
+      useAppStore.setState({
+        selectedFile: mockFile,
+        fileContent: 'old',
+        diffData: { original: '', modified: '', isNew: false },
+      });
       useAppStore.getState().setFolder(mockFolderResult);
       const state = useAppStore.getState();
       expect(state.selectedFile).toBeNull();
@@ -83,7 +87,12 @@ describe('app-store', () => {
 
   describe('selectFile', () => {
     it('sets the selected file and resets view state', () => {
-      useAppStore.setState({ fileContent: 'old content', viewMode: 'diff', isLoading: false, changedLines: [1, 2] });
+      useAppStore.setState({
+        fileContent: 'old content',
+        viewMode: 'diff',
+        isLoading: false,
+        changedLines: [1, 2],
+      });
       useAppStore.getState().selectFile(mockFile);
       const state = useAppStore.getState();
       expect(state.selectedFile).toBe(mockFile);
@@ -146,7 +155,7 @@ describe('app-store', () => {
 
   describe('callback registration', () => {
     it('registers and clears scrollView callback', () => {
-      const cb = (delta: number) => {};
+      const cb = (_delta: number) => {};
       useAppStore.getState().setScrollView(cb);
       expect(useAppStore.getState().scrollView).toBe(cb);
       useAppStore.getState().setScrollView(null);
@@ -165,7 +174,10 @@ describe('app-store', () => {
 
   describe('setFiles', () => {
     it('updates the file list', () => {
-      const files = [mockFile, { ...mockFile, absolutePath: '/project/b.ts', relativePath: 'b.ts' }];
+      const files = [
+        mockFile,
+        { ...mockFile, absolutePath: '/project/b.ts', relativePath: 'b.ts' },
+      ];
       useAppStore.getState().setFiles(files);
       expect(useAppStore.getState().files).toHaveLength(2);
     });

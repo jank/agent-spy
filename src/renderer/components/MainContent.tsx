@@ -96,9 +96,7 @@ export function MainContent() {
     <div className="flex-1 flex flex-col min-w-0">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-        <span className="text-sm font-medium truncate flex-1">
-          {selectedFile.relativePath}
-        </span>
+        <span className="text-sm font-medium truncate flex-1">{selectedFile.relativePath}</span>
 
         {isGitRepo && selectedFile.isGitChanged && <ChangeNavigation />}
 
@@ -129,7 +127,9 @@ export function MainContent() {
       </div>
 
       {/* Focus indicator */}
-      <div className={`h-[2px] transition-colors duration-200 ${focusPane === 'view' ? 'bg-blue-500' : 'bg-transparent'}`} />
+      <div
+        className={`h-[2px] transition-colors duration-200 ${focusPane === 'view' ? 'bg-blue-500' : 'bg-transparent'}`}
+      />
 
       {/* File content */}
       <div className="flex-1 overflow-hidden">
