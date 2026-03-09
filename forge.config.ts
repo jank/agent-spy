@@ -19,10 +19,10 @@ const config: ForgeConfig = {
   },
   makers: [
     new MakerZIP({}, ['darwin']),
-    new MakerDMG({}),
-    new MakerSquirrel({ name: 'AgentSpy' }),
-    new MakerDeb({}),
-    new MakerRpm({}),
+    new MakerDMG({ icon: './build/icon.icns' }),
+    new MakerSquirrel({ name: 'AgentSpy', setupIcon: './build/icon.ico' }),
+    new MakerDeb({ options: { icon: './build/icon.png' } }),
+    new MakerRpm({ options: { icon: './build/icon.png' } }),
   ],
   plugins: [
     new VitePlugin({

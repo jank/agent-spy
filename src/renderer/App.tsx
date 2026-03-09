@@ -33,6 +33,9 @@ export default function App() {
         return;
       }
 
+      // Let native shortcuts (Cmd/Ctrl+key) pass through to the system
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
       // Skip other shortcuts when typing in an input/textarea
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
