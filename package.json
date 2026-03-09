@@ -1,7 +1,7 @@
 {
   "name": "agent-spy",
   "productName": "Agent Spy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Verify changes made by AI agents to your files",
   "main": ".vite/build/main.js",
   "private": true,
@@ -52,6 +52,9 @@
     "zustand": "^5.0.11"
   },
   "overrides": {
-    "tar": "^7.5.10"
+    "tar": "^7.5.10",
+    "dompurify": "^3.3.2",
+    "@tootallnate/once": "^3.0.1",
+    "tmp": "^0.2.4"
   }
 }
