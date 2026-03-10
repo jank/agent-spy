@@ -6,7 +6,7 @@ import { useDetailedChanges } from '../hooks/use-detailed-changes';
 import { useAppStore } from '../stores/app-store';
 import type { WatchedFile } from '../types';
 import type { Plugin } from 'unified';
-import { visit } from 'unist-util-visit';
+import { visit, SKIP } from 'unist-util-visit';
 
 interface Props {
   content: string;
@@ -19,6 +19,20 @@ const CLASS_MAP = {
   deleted: 'changed-line-deleted',
 } as const;
 
+// Container elements whose children carry the actual content —
+// highlighting these causes duplicate nested borders.
+const CONTAINER_TAGS = new Set([
+  'blockquote',
+  'ul',
+  'ol',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'section',
+  'details',
+]);
+
 function createHighlightPlugin(
   lineTypeMap: Map<number, 'added' | 'modified'>,
   deletionAfterLines: Set<number>,
@@ -29,6 +43,9 @@ function createHighlightPlugin(
       const pos = node.position;
       if (!pos) return;
 
+      // Skip container elements — their children will be highlighted instead
+      if (CONTAINER_TAGS.has(node.tagName)) return;
+
       // Check if any line in this element's range has a change
       for (let line = pos.start.line; line <= pos.end.line; line++) {
         const changeType = lineTypeMap.get(line);
@@ -37,7 +54,8 @@ function createHighlightPlugin(
           node.properties = node.properties ?? {};
           node.properties.className = [...existing, CLASS_MAP[changeType]];
           node.properties['data-changed-line'] = String(line);
-          return;
+          // Skip children so nested elements don't get duplicate highlights
+          return SKIP;
         }
       }
 
