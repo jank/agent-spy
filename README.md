@@ -18,22 +18,28 @@ Agent Spy watches your project folder, highlights exactly what changed, and show
 
 ## Keyboard shortcuts
 
-| Key | Action |
-|-----|--------|
-| `h` | Focus file list |
-| `l` | Focus file view |
-| `j` | Next file / change |
-| `k` | Previous file / change |
-| `s` | Toggle star (file list) |
-| `d` | Toggle diff / content |
-| `/` | Focus filter |
-| `c` | Toggle changed filter |
-| `↑` `↓` | Scroll view |
-| `?` | Toggle help |
+| Key     | Action                  |
+| ------- | ----------------------- |
+| `h`     | Focus file list         |
+| `l`     | Focus file view         |
+| `j`     | Next file / change      |
+| `k`     | Previous file / change  |
+| `s`     | Toggle star (file list) |
+| `d`     | Toggle diff / content   |
+| `/`     | Focus filter            |
+| `c`     | Toggle changed filter   |
+| `↑` `↓` | Scroll view             |
+| `?`     | Toggle help             |
 
 ## Install
 
 Download the latest release for your platform from [Releases](https://github.com/jank/agent-spy/releases).
+
+> **Note:** This app is not code-signed. On macOS, you may see a warning that the application is damaged. To fix this, run:
+>
+> ```bash
+> xattr -cr "/Applications/Agent Spy.app"
+> ```
 
 ## Development
 
