@@ -77,7 +77,6 @@ export const useAppStore = create<AppState>((set) => ({
       selectedFile: file,
       fileContent: null,
       diffData: null,
-      viewMode: 'content',
       isLoading: true,
       changedLines: [],
       scrollToLine: null,

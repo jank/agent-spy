@@ -50,6 +50,17 @@ export default function App() {
               window.api.getGitDiff(store.selectedFile.absolutePath).then((data) => {
                 useAppStore.getState().setDiffData(data);
               });
+            } else if (!store.fileContent) {
+              useAppStore.getState().setLoading(true);
+              if (isBinaryFile(store.selectedFile.relativePath)) {
+                window.api.getFileDataUrl(store.selectedFile.absolutePath).then((dataUrl) => {
+                  useAppStore.getState().setFileContent(dataUrl);
+                });
+              } else {
+                window.api.getFileContent(store.selectedFile.absolutePath).then((content) => {
+                  useAppStore.getState().setFileContent(content);
+                });
+              }
             }
           }
           break;

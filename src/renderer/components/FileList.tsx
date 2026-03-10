@@ -81,8 +81,14 @@ function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
  * Animated file list using FLIP technique for smooth reordering.
  */
 function selectFileByObject(file: WatchedFile) {
+  const { viewMode, isGitRepo } = useAppStore.getState();
   useAppStore.getState().selectFile(file);
-  if (isBinaryFile(file.relativePath)) {
+
+  if (viewMode === 'diff' && isGitRepo && !isBinaryFile(file.relativePath)) {
+    window.api.getGitDiff(file.absolutePath).then((data) => {
+      useAppStore.getState().setDiffData(data);
+    });
+  } else if (isBinaryFile(file.relativePath)) {
     window.api.getFileDataUrl(file.absolutePath).then((dataUrl) => {
       useAppStore.getState().setFileContent(dataUrl);
     });

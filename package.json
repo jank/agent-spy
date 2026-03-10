@@ -1,7 +1,7 @@
 {
   "name": "agent-spy",
   "productName": "Agent Spy",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Verify changes made by AI agents to your files",
   "main": ".vite/build/main.js",
   "private": true,

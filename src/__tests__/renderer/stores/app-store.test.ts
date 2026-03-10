@@ -86,7 +86,7 @@ describe('app-store', () => {
   });
 
   describe('selectFile', () => {
-    it('sets the selected file and resets view state', () => {
+    it('sets the selected file and resets view state but preserves viewMode', () => {
       useAppStore.setState({
         fileContent: 'old content',
         viewMode: 'diff',
@@ -98,7 +98,7 @@ describe('app-store', () => {
       expect(state.selectedFile).toBe(mockFile);
       expect(state.fileContent).toBeNull();
       expect(state.diffData).toBeNull();
-      expect(state.viewMode).toBe('content');
+      expect(state.viewMode).toBe('diff');
       expect(state.isLoading).toBe(true);
       expect(state.changedLines).toEqual([]);
       expect(state.scrollToLine).toBeNull();
