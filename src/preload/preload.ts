@@ -12,6 +12,8 @@ const IPC = {
   FILES_CHANGED: 'agent-spy:files-changed',
   GET_PERSISTED_STATE: 'agent-spy:get-persisted-state',
   SAVE_SIDEBAR_WIDTH: 'agent-spy:save-sidebar-width',
+  CHECK_FOR_UPDATE: 'agent-spy:check-for-update',
+  OPEN_RELEASE_URL: 'agent-spy:open-release-url',
 } as const;
 
 contextBridge.exposeInMainWorld('api', {
@@ -25,6 +27,8 @@ contextBridge.exposeInMainWorld('api', {
   getStarred: () => ipcRenderer.invoke(IPC.GET_STARRED),
   getPersistedState: () => ipcRenderer.invoke(IPC.GET_PERSISTED_STATE),
   saveSidebarWidth: (width: number) => ipcRenderer.invoke(IPC.SAVE_SIDEBAR_WIDTH, width),
+  checkForUpdate: () => ipcRenderer.invoke(IPC.CHECK_FOR_UPDATE),
+  openReleaseUrl: (url: string) => ipcRenderer.invoke(IPC.OPEN_RELEASE_URL, url),
   onFilesChanged: (cb: (...args: unknown[]) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => cb(...args);
     ipcRenderer.on(IPC.FILES_CHANGED, handler);

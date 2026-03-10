@@ -4,6 +4,7 @@ import { GitService } from './services/git-service';
 import { FileWatcherService } from './services/file-watcher-service';
 import { StarredStore } from './services/starred-store';
 import { getState, saveState } from './services/app-state';
+import { checkForUpdate, openReleaseUrl } from './services/update-checker';
 
 import * as path from 'node:path';
 
@@ -19,6 +20,8 @@ const IPC = {
   FILES_CHANGED: 'agent-spy:files-changed',
   GET_PERSISTED_STATE: 'agent-spy:get-persisted-state',
   SAVE_SIDEBAR_WIDTH: 'agent-spy:save-sidebar-width',
+  CHECK_FOR_UPDATE: 'agent-spy:check-for-update',
+  OPEN_RELEASE_URL: 'agent-spy:open-release-url',
 } as const;
 
 const MIME_TYPES: Record<string, string> = {
@@ -126,5 +129,17 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.SAVE_SIDEBAR_WIDTH, (_e, width: number) => {
     saveState({ sidebarWidth: width });
+  });
+
+  ipcMain.handle(IPC.CHECK_FOR_UPDATE, async () => {
+    try {
+      return await checkForUpdate();
+    } catch {
+      return null;
+    }
+  });
+
+  ipcMain.handle(IPC.OPEN_RELEASE_URL, (_e, url: string) => {
+    openReleaseUrl(url);
   });
 }

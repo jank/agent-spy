@@ -29,6 +29,13 @@ export interface PersistedState {
   lastFolderPath?: string;
 }
 
+export interface UpdateInfo {
+  currentVersion: string;
+  latestVersion: string;
+  releaseUrl: string;
+  hasUpdate: boolean;
+}
+
 export interface ElectronAPI {
   openFolder: () => Promise<OpenFolderResult | null>;
   openFolderByPath: (path: string) => Promise<OpenFolderResult | null>;
@@ -40,6 +47,8 @@ export interface ElectronAPI {
   getStarred: () => Promise<string[]>;
   getPersistedState: () => Promise<PersistedState>;
   saveSidebarWidth: (width: number) => Promise<void>;
+  checkForUpdate: () => Promise<UpdateInfo | null>;
+  openReleaseUrl: (url: string) => Promise<void>;
   onFilesChanged: (cb: (files: WatchedFile[]) => void) => () => void;
 }
 

@@ -1,7 +1,16 @@
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
+import type { UpdateInfo } from '../types';
 
 export function TitleBar() {
   const { folderPath } = useAppStore();
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+
+  useEffect(() => {
+    window.api.checkForUpdate().then((info) => {
+      if (info?.hasUpdate) setUpdate(info);
+    });
+  }, []);
 
   const handleOpenFolder = async () => {
     const result = await window.api.openFolder();
@@ -51,6 +60,17 @@ export function TitleBar() {
       )}
 
       <div className="flex-1" />
+
+      {update && (
+        <button
+          onClick={() => window.api.openReleaseUrl(update.releaseUrl)}
+          className="app-no-drag shrink-0 mr-2 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 rounded-full transition-colors"
+          title={`Update from v${update.currentVersion} to v${update.latestVersion}`}
+        >
+          v{update.latestVersion} available
+        </button>
+      )}
+
       <button
         onClick={() => useAppStore.getState().setShowHelp(true)}
         className="app-no-drag shrink-0 px-2 py-0.5 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 rounded transition-colors"
