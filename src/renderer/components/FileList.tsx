@@ -54,8 +54,10 @@ function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
       )}
 
       {/* Git change indicator */}
-      {file.isGitChanged && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
-      {!file.isGitChanged && <span className="w-1.5 shrink-0" />}
+      {(file.isGitChanged || file.isNew) && (
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+      )}
+      {!file.isGitChanged && !file.isNew && <span className="w-1.5 shrink-0" />}
 
       {/* File name */}
       <span className="flex-1 truncate" title={file.relativePath}>
@@ -112,7 +114,7 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
     ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
     : files;
   if (changedOnly) {
-    filtered = filtered.filter((f) => f.isGitChanged);
+    filtered = filtered.filter((f) => f.isGitChanged || f.isNew);
   }
   const starredFiles = filtered.filter((f) => starred.includes(f.absolutePath));
   const otherFiles = filtered.filter((f) => !starred.includes(f.absolutePath));

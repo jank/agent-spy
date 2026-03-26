@@ -8,6 +8,7 @@ export interface WatchedFile {
   relativePath: string;
   modifiedMs: number;
   isGitChanged: boolean;
+  isNew: boolean;
   /** Monotonically increasing counter — bumped on every file change event */
   generation: number;
 }
@@ -21,7 +22,10 @@ export class FileWatcherService {
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private gitDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private gitChangedFiles = new Set<string>();
-  private refreshGitStatus: (() => Promise<Set<string>>) | null = null;
+  private gitNewFiles = new Set<string>();
+  private refreshGitStatus:
+    | (() => Promise<{ changed: Set<string>; newFiles: Set<string> }>)
+    | null = null;
   private isReady = false;
   private closed = false;
 
@@ -42,16 +46,18 @@ export class FileWatcherService {
     this.ig.add('node_modules');
   }
 
-  setGitChangedFiles(changed: Set<string>): void {
+  setGitChangedFiles(changed: Set<string>, newFiles: Set<string>): void {
     this.gitChangedFiles = changed;
+    this.gitNewFiles = newFiles;
     // Update existing files with git status
     for (const [absPath, file] of this.files) {
       file.isGitChanged = this.gitChangedFiles.has(file.relativePath);
+      file.isNew = this.gitNewFiles.has(file.relativePath);
       this.files.set(absPath, file);
     }
   }
 
-  onRefreshGitStatus(cb: () => Promise<Set<string>>): void {
+  onRefreshGitStatus(cb: () => Promise<{ changed: Set<string>; newFiles: Set<string> }>): void {
     this.refreshGitStatus = cb;
   }
 
@@ -86,6 +92,7 @@ export class FileWatcherService {
         relativePath,
         modifiedMs: stat.mtimeMs,
         isGitChanged: this.gitChangedFiles.has(relativePath),
+        isNew: this.gitNewFiles.has(relativePath),
         generation: (existing?.generation ?? 0) + 1,
       });
     } catch {
@@ -109,9 +116,9 @@ export class FileWatcherService {
     this.debounceTimer = setTimeout(async () => {
       if (this.closed) return;
       if (this.refreshGitStatus) {
-        const changed = await this.refreshGitStatus();
+        const { changed, newFiles } = await this.refreshGitStatus();
         if (this.closed) return;
-        this.setGitChangedFiles(changed);
+        this.setGitChangedFiles(changed, newFiles);
       }
       this.callback?.(this.getSortedFiles());
     }, 300);
@@ -141,9 +148,9 @@ export class FileWatcherService {
       this.gitDebounceTimer = setTimeout(async () => {
         if (this.closed) return;
         if (this.refreshGitStatus) {
-          const changed = await this.refreshGitStatus();
+          const { changed, newFiles } = await this.refreshGitStatus();
           if (this.closed) return;
-          this.setGitChangedFiles(changed);
+          this.setGitChangedFiles(changed, newFiles);
         }
         this.callback?.(this.getSortedFiles());
       }, 500);

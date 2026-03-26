@@ -7,6 +7,7 @@ const mockFile: WatchedFile = {
   relativePath: 'src/app.ts',
   modifiedMs: Date.now(),
   isGitChanged: false,
+  isNew: false,
   generation: 1,
 };
 

@@ -49,13 +49,25 @@ describe('GitService', () => {
         renamed: [{ from: 'old.ts', to: 'd.ts' }],
       });
       const result = await service.getChangedFiles();
-      expect(result).toEqual(new Set(['a.ts', 'b.ts', 'c.ts', 'd.ts']));
+      expect(result.changed).toEqual(new Set(['a.ts', 'b.ts', 'c.ts', 'd.ts']));
     });
 
-    it('returns empty set on error', async () => {
+    it('marks created and not_added files as new', async () => {
+      (mockGit.status as any).mockResolvedValue({
+        modified: ['a.ts'],
+        created: ['b.ts'],
+        not_added: ['c.ts'],
+        renamed: [{ from: 'old.ts', to: 'd.ts' }],
+      });
+      const result = await service.getChangedFiles();
+      expect(result.newFiles).toEqual(new Set(['b.ts', 'c.ts']));
+    });
+
+    it('returns empty sets on error', async () => {
       (mockGit.status as any).mockRejectedValue(new Error('fail'));
       const result = await service.getChangedFiles();
-      expect(result).toEqual(new Set());
+      expect(result.changed).toEqual(new Set());
+      expect(result.newFiles).toEqual(new Set());
     });
 
     it('deduplicates files that appear in multiple categories', async () => {
@@ -66,7 +78,7 @@ describe('GitService', () => {
         renamed: [],
       });
       const result = await service.getChangedFiles();
-      expect(result.size).toBe(1);
+      expect(result.changed.size).toBe(1);
     });
   });
 

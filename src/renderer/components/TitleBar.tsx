@@ -24,7 +24,7 @@ export function TitleBar() {
   return (
     <div className="h-[52px] shrink-0 flex items-center px-3 app-drag-region border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/50">
       {/* Spacer for traffic lights */}
-      <div className="w-[60px] shrink-0" />
+      <div className="w-[76px] shrink-0" />
 
       <span className="text-sm font-semibold shrink-0">Agent Spy</span>
 

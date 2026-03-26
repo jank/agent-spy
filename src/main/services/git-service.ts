@@ -24,21 +24,28 @@ export class GitService {
     }
   }
 
-  async getChangedFiles(): Promise<Set<string>> {
+  async getChangedFiles(): Promise<{ changed: Set<string>; newFiles: Set<string> }> {
     try {
       const status = await this.git.status();
       const changed = new Set<string>();
-      for (const f of [
-        ...status.modified,
-        ...status.created,
-        ...status.not_added,
-        ...status.renamed.map((r) => r.to),
-      ]) {
+      const newFiles = new Set<string>();
+      for (const f of status.created) {
+        changed.add(f);
+        newFiles.add(f);
+      }
+      for (const f of status.not_added) {
+        changed.add(f);
+        newFiles.add(f);
+      }
+      for (const f of status.modified) {
         changed.add(f);
       }
-      return changed;
+      for (const f of status.renamed.map((r) => r.to)) {
+        changed.add(f);
+      }
+      return { changed, newFiles };
     } catch {
-      return new Set();
+      return { changed: new Set(), newFiles: new Set() };
     }
   }
 

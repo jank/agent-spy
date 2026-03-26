@@ -70,11 +70,31 @@ describe('FileWatcherService', () => {
         relativePath: 'a.ts',
         modifiedMs: 1000,
         isGitChanged: false,
+        isNew: false,
         generation: 1,
       });
 
-      service.setGitChangedFiles(new Set(['a.ts']));
+      service.setGitChangedFiles(new Set(['a.ts']), new Set());
       expect(filesMap.get('/project/a.ts')!.isGitChanged).toBe(true);
+    });
+
+    it('updates isNew on tracked files', () => {
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
+      const service = new FileWatcherService('/project');
+      const filesMap = (service as any).files as Map<string, WatchedFile>;
+      filesMap.set('/project/a.ts', {
+        absolutePath: '/project/a.ts',
+        relativePath: 'a.ts',
+        modifiedMs: 1000,
+        isGitChanged: false,
+        isNew: false,
+        generation: 1,
+      });
+
+      service.setGitChangedFiles(new Set(['a.ts']), new Set(['a.ts']));
+      expect(filesMap.get('/project/a.ts')!.isNew).toBe(true);
     });
 
     it('clears isGitChanged when file is no longer changed', () => {
@@ -88,10 +108,11 @@ describe('FileWatcherService', () => {
         relativePath: 'a.ts',
         modifiedMs: 1000,
         isGitChanged: true,
+        isNew: false,
         generation: 1,
       });
 
-      service.setGitChangedFiles(new Set());
+      service.setGitChangedFiles(new Set(), new Set());
       expect(filesMap.get('/project/a.ts')!.isGitChanged).toBe(false);
     });
   });
@@ -137,6 +158,7 @@ describe('FileWatcherService', () => {
         relativePath: 'old.ts',
         modifiedMs: 1000,
         isGitChanged: false,
+        isNew: false,
         generation: 1,
       });
       filesMap.set('/project/new.ts', {
@@ -144,6 +166,7 @@ describe('FileWatcherService', () => {
         relativePath: 'new.ts',
         modifiedMs: 2000,
         isGitChanged: false,
+        isNew: false,
         generation: 1,
       });
 
