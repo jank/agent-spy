@@ -135,10 +135,17 @@ export default function App() {
       const store = useAppStore.getState();
       store.setFiles(files);
 
-      // Update the selected file if it changed
+      // Update the selected file if it changed — use indexed lookup for large lists
       const selected = store.selectedFile;
       if (selected) {
-        const updated = files.find((f) => f.absolutePath === selected.absolutePath);
+        // Build a quick index only when we have a selection to check
+        let updated: WatchedFile | undefined;
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].absolutePath === selected.absolutePath) {
+            updated = files[i];
+            break;
+          }
+        }
         if (updated) {
           const contentChanged = updated.generation !== selected.generation;
           const gitStatusChanged = updated.isGitChanged !== selected.isGitChanged;

@@ -28,6 +28,11 @@ export class FileWatcherService {
     | null = null;
   private isReady = false;
   private closed = false;
+  private initialScanTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastIncrementalEmit = 0;
+
+  /** How often to emit incremental updates during initial scan (ms) */
+  private static readonly INCREMENTAL_INTERVAL = 200;
 
   constructor(private rootPath: string) {
     this.ig = ignore();
@@ -49,11 +54,10 @@ export class FileWatcherService {
   setGitChangedFiles(changed: Set<string>, newFiles: Set<string>): void {
     this.gitChangedFiles = changed;
     this.gitNewFiles = newFiles;
-    // Update existing files with git status
-    for (const [absPath, file] of this.files) {
-      file.isGitChanged = this.gitChangedFiles.has(file.relativePath);
-      file.isNew = this.gitNewFiles.has(file.relativePath);
-      this.files.set(absPath, file);
+    // Update existing files with git status — iterate Map values directly
+    for (const file of this.files.values()) {
+      file.isGitChanged = changed.has(file.relativePath);
+      file.isNew = newFiles.has(file.relativePath);
     }
   }
 
@@ -62,21 +66,39 @@ export class FileWatcherService {
   }
 
   startWatching(): void {
+    const t0 = performance.now();
+    const ignoreFn = (filePath: string) => {
+      const rel = path.relative(this.rootPath, filePath);
+      if (!rel || rel === '.') return false;
+      return this.ig.ignores(rel);
+    };
+
     this.watcher = watch(this.rootPath, {
-      ignored: (filePath: string) => {
-        const rel = path.relative(this.rootPath, filePath);
-        if (!rel || rel === '.') return false;
-        return this.ig.ignores(rel);
-      },
+      ignored: ignoreFn,
       persistent: true,
       ignoreInitial: false,
+      // Use polling to avoid EMFILE on large projects — native fs.watch
+      // opens one fd per file and easily exhausts the OS limit.
+      usePolling: true,
+      interval: 500,
+      binaryInterval: 1000,
     });
 
     this.watcher.on('add', (fp) => this.trackFile(fp));
     this.watcher.on('change', (fp) => this.trackFile(fp));
     this.watcher.on('unlink', (fp) => this.removeFile(fp));
+    this.watcher.on('error', (err) => {
+      console.warn('[watcher] error:', (err as NodeJS.ErrnoException).code ?? err);
+    });
     this.watcher.on('ready', () => {
       this.isReady = true;
+      if (this.initialScanTimer) {
+        clearTimeout(this.initialScanTimer);
+        this.initialScanTimer = null;
+      }
+      console.warn(
+        `[perf] watcher ready: ${this.files.size} files in ${(performance.now() - t0).toFixed(0)}ms`,
+      );
     });
   }
 
@@ -98,10 +120,34 @@ export class FileWatcherService {
     } catch {
       return;
     }
-    // Only emit changes after the initial scan is complete
+
     if (this.isReady) {
+      // Normal post-scan change — debounced emit with git refresh
       this.emitDebounced();
+    } else {
+      // During initial scan — emit incremental batches so UI isn't blank
+      this.emitIncremental();
     }
+  }
+
+  /** Emit partial file lists during initial scan so the UI populates progressively */
+  private emitIncremental(): void {
+    const now = performance.now();
+    if (now - this.lastIncrementalEmit < FileWatcherService.INCREMENTAL_INTERVAL) {
+      // Schedule one trailing emit to catch the last batch
+      if (!this.initialScanTimer) {
+        this.initialScanTimer = setTimeout(() => {
+          this.initialScanTimer = null;
+          if (!this.isReady && !this.closed) {
+            this.lastIncrementalEmit = performance.now();
+            this.callback?.(this.getSortedFiles());
+          }
+        }, FileWatcherService.INCREMENTAL_INTERVAL);
+      }
+      return;
+    }
+    this.lastIncrementalEmit = now;
+    this.callback?.(this.getSortedFiles());
   }
 
   private removeFile(absolutePath: string): void {
@@ -125,7 +171,13 @@ export class FileWatcherService {
   }
 
   private getSortedFiles(): WatchedFile[] {
-    return Array.from(this.files.values()).sort((a, b) => b.modifiedMs - a.modifiedMs);
+    const t0 = performance.now();
+    const result = Array.from(this.files.values()).sort((a, b) => b.modifiedMs - a.modifiedMs);
+    const elapsed = performance.now() - t0;
+    if (elapsed > 10) {
+      console.warn(`[perf] getSortedFiles: ${result.length} files in ${elapsed.toFixed(1)}ms`);
+    }
+    return result;
   }
 
   onChange(cb: (files: WatchedFile[]) => void): void {
@@ -162,6 +214,9 @@ export class FileWatcherService {
   }
 
   getInitialFiles(): Promise<WatchedFile[]> {
+    if (this.isReady) {
+      return Promise.resolve(this.getSortedFiles());
+    }
     return new Promise((resolve) => {
       this.watcher?.on('ready', () => resolve(this.getSortedFiles()));
     });
@@ -175,5 +230,6 @@ export class FileWatcherService {
     this.files.clear();
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
     if (this.gitDebounceTimer) clearTimeout(this.gitDebounceTimer);
+    if (this.initialScanTimer) clearTimeout(this.initialScanTimer);
   }
 }

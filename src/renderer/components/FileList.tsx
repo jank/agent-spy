@@ -1,7 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 import { isBinaryFile } from '../lib/file-types';
 import type { WatchedFile } from '../types';
+
+const ROW_HEIGHT = 32;
+const OVERSCAN = 10;
 
 function timeAgo(ms: number): string {
   const seconds = Math.floor((Date.now() - ms) / 1000);
@@ -14,14 +17,21 @@ function timeAgo(ms: number): string {
   return `${days}d ago`;
 }
 
-function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
-  const { selectedFile, starred } = useAppStore();
-  const isSelected = selectedFile?.absolutePath === file.absolutePath;
-  const isStarred = starred.includes(file.absolutePath);
-  const rowRef = useRef<HTMLDivElement>(null);
+const FileRow = memo(function FileRow({
+  file,
+  flashing,
+  isSelected,
+  isStarred,
+  onToggleStar,
+}: {
+  file: WatchedFile;
+  flashing: boolean;
+  isSelected: boolean;
+  isStarred: boolean;
+  onToggleStar: (path: string) => void;
+}) {
   const [flashKey, setFlashKey] = useState(0);
 
-  // Trigger flash animation by bumping key
   useEffect(() => {
     if (flashing) {
       setFlashKey((k) => k + 1);
@@ -32,21 +42,20 @@ function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
     selectFileByObject(file);
   };
 
-  const handleToggleStar = async (e: React.MouseEvent) => {
+  const handleToggleStar = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = await window.api.toggleStar(file.absolutePath);
-    useAppStore.getState().setStarred(updated);
+    onToggleStar(file.absolutePath);
   };
 
   return (
     <div
-      ref={rowRef}
       onClick={handleClick}
-      className={`app-no-drag flex items-center gap-2 px-3 py-1.5 cursor-pointer text-sm transition-colors ${
+      className={`app-no-drag flex items-center gap-2 px-3 cursor-pointer text-sm transition-colors ${
         isSelected
           ? 'bg-blue-500/15 dark:bg-blue-500/20'
           : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30'
       }`}
+      style={{ height: ROW_HEIGHT }}
     >
       {/* Flash overlay */}
       {flashing && (
@@ -77,11 +86,8 @@ function FileRow({ file, flashing }: { file: WatchedFile; flashing: boolean }) {
       </button>
     </div>
   );
-}
+});
 
-/**
- * Animated file list using FLIP technique for smooth reordering.
- */
 function selectFileByObject(file: WatchedFile) {
   const { viewMode, isGitRepo } = useAppStore.getState();
   useAppStore.getState().selectFile(file);
@@ -101,27 +107,93 @@ function selectFileByObject(file: WatchedFile) {
   }
 }
 
+/** Height of the "Starred" section header */
+const HEADER_HEIGHT = 24;
+/** Height of the separator line between starred and other */
+const SEPARATOR_HEIGHT = 12;
+
 export function FileList({ filter, changedOnly }: { filter: string; changedOnly: boolean }) {
   const files = useAppStore((s) => s.files);
   const starred = useAppStore((s) => s.starred);
+  const selectedPath = useAppStore((s) => s.selectedFile?.absolutePath ?? null);
   const [flashSet, setFlashSet] = useState<Set<string>>(new Set());
   const prevModifiedRef = useRef<Map<string, number>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
-  const positionsRef = useRef<Map<string, number>>(new Map());
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(600);
+
+  // O(1) starred lookup
+  const starredSet = useMemo(() => new Set(starred), [starred]);
 
   const lowerFilter = filter.toLowerCase();
-  let filtered = lowerFilter
-    ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
-    : files;
-  if (changedOnly) {
-    filtered = filtered.filter((f) => f.isGitChanged || f.isNew);
-  }
-  const starredFiles = filtered.filter((f) => starred.includes(f.absolutePath));
-  const otherFiles = filtered.filter((f) => !starred.includes(f.absolutePath));
 
-  // Ordered list for keyboard navigation: starred first, then others
+  // Filter and split into starred/other — O(n) with Set lookups
+  const { starredFiles, otherFiles } = useMemo(() => {
+    const t0 = performance.now();
+    let filtered = lowerFilter
+      ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
+      : files;
+    if (changedOnly) {
+      filtered = filtered.filter((f) => f.isGitChanged || f.isNew);
+    }
+    const starred: WatchedFile[] = [];
+    const other: WatchedFile[] = [];
+    for (const f of filtered) {
+      if (starredSet.has(f.absolutePath)) {
+        starred.push(f);
+      } else {
+        other.push(f);
+      }
+    }
+    const elapsed = performance.now() - t0;
+    if (elapsed > 5) {
+      console.warn(
+        `[perf] FileList filter: ${files.length} → ${starred.length + other.length} in ${elapsed.toFixed(1)}ms`,
+      );
+    }
+    return { starredFiles: starred, otherFiles: other };
+  }, [files, starredSet, lowerFilter, changedOnly]);
+
+  // Build flat item list for virtualization
+  const items = useMemo(() => {
+    const result: Array<
+      | { type: 'header'; key: string }
+      | { type: 'file'; key: string; file: WatchedFile }
+      | { type: 'separator'; key: string }
+    > = [];
+    if (starredFiles.length > 0) {
+      result.push({ type: 'header', key: '__starred-header' });
+      for (const f of starredFiles) {
+        result.push({ type: 'file', key: f.absolutePath, file: f });
+      }
+      result.push({ type: 'separator', key: '__separator' });
+    }
+    for (const f of otherFiles) {
+      result.push({ type: 'file', key: f.absolutePath, file: f });
+    }
+    return result;
+  }, [starredFiles, otherFiles]);
+
+  // Compute item offsets for variable-height rows
+  const { offsets, totalHeight } = useMemo(() => {
+    const offs: number[] = new Array(items.length);
+    let y = 0;
+    for (let i = 0; i < items.length; i++) {
+      offs[i] = y;
+      const item = items[i];
+      if (item.type === 'header') y += HEADER_HEIGHT;
+      else if (item.type === 'separator') y += SEPARATOR_HEIGHT;
+      else y += ROW_HEIGHT;
+    }
+    return { offsets: offs, totalHeight: y };
+  }, [items]);
+
+  // Ordered list for keyboard navigation
   const orderedFilesRef = useRef<WatchedFile[]>([]);
-  orderedFilesRef.current = [...starredFiles, ...otherFiles];
+  orderedFilesRef.current = useMemo(
+    () => [...starredFiles, ...otherFiles],
+    [starredFiles, otherFiles],
+  );
 
   // Register file navigation callbacks once
   useEffect(() => {
@@ -153,22 +225,29 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
     };
   }, []);
 
-  // Before DOM update: capture current positions (only when files change)
-  useLayoutEffect(() => {
-    if (!containerRef.current) return;
-    const positions = new Map<string, number>();
-    const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
-    rows.forEach((row) => {
-      // Clear any lingering transform before capturing position
-      row.style.transform = '';
-      row.style.transition = '';
-      const path = row.dataset.filePath!;
-      positions.set(path, row.getBoundingClientRect().top);
-    });
-    positionsRef.current = positions;
-  }, [files, starred]);
+  // Track scroll position from the parent scroll container
+  useEffect(() => {
+    const container = containerRef.current?.parentElement;
+    if (!container) return;
 
-  // After DOM update: detect changes, flash, and animate position
+    const onScroll = () => setScrollTop(container.scrollTop);
+    container.addEventListener('scroll', onScroll, { passive: true });
+
+    // Measure viewport
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setViewportHeight(entry.contentRect.height);
+      }
+    });
+    ro.observe(container);
+
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+      ro.disconnect();
+    };
+  }, []);
+
+  // Flash detection — only track changed timestamps, skip FLIP for large lists
   useEffect(() => {
     const prev = prevModifiedRef.current;
     const newFlash = new Set<string>();
@@ -189,48 +268,17 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
 
     if (newFlash.size > 0) {
       setFlashSet(newFlash);
-
-      // FLIP: animate rows from old position to new position
-      const animatedRows: HTMLElement[] = [];
-      if (containerRef.current) {
-        const rows = containerRef.current.querySelectorAll<HTMLElement>('[data-file-path]');
-        rows.forEach((row) => {
-          const path = row.dataset.filePath!;
-          const oldTop = positionsRef.current.get(path);
-          if (oldTop !== undefined) {
-            const newTop = row.getBoundingClientRect().top;
-            const delta = oldTop - newTop;
-            if (Math.abs(delta) > 1) {
-              row.style.transform = `translateY(${delta}px)`;
-              row.style.transition = 'none';
-              // Force reflow
-              row.offsetHeight;
-              row.style.transform = '';
-              row.style.transition = 'transform 300ms ease-out';
-              animatedRows.push(row);
-            }
-          }
-        });
-      }
-
-      // Clean up inline styles after animation completes
-      const cleanupTimeout = setTimeout(() => {
-        animatedRows.forEach((row) => {
-          row.style.transform = '';
-          row.style.transition = '';
-        });
-      }, 350);
-
-      // Clear flash after animation
       const flashTimeout = setTimeout(() => setFlashSet(new Set()), 5000);
-      return () => {
-        clearTimeout(cleanupTimeout);
-        clearTimeout(flashTimeout);
-      };
+      return () => clearTimeout(flashTimeout);
     }
   }, [files]);
 
-  if (filtered.length === 0) {
+  const handleToggleStar = useCallback(async (filePath: string) => {
+    const updated = await window.api.toggleStar(filePath);
+    useAppStore.getState().setStarred(updated);
+  }, []);
+
+  if (items.length === 0) {
     return (
       <div className="px-3 py-8 text-center text-sm text-zinc-400">
         {lowerFilter ? 'No matching files' : 'No files found'}
@@ -238,26 +286,72 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
     );
   }
 
+  // Virtualization: find visible range using binary search on offsets
+  let startIdx = 0;
+  let lo = 0,
+    hi = offsets.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    if (offsets[mid] < scrollTop) {
+      startIdx = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  startIdx = Math.max(0, startIdx - OVERSCAN);
+
+  const endY = scrollTop + viewportHeight;
+  let endIdx = startIdx;
+  for (let i = startIdx; i < items.length; i++) {
+    if (offsets[i] > endY + OVERSCAN * ROW_HEIGHT) break;
+    endIdx = i;
+  }
+  endIdx = Math.min(items.length - 1, endIdx + OVERSCAN);
+
+  const visibleItems = items.slice(startIdx, endIdx + 1);
+  const offsetTop = startIdx < offsets.length ? offsets[startIdx] : 0;
+
   return (
-    <div ref={containerRef}>
-      {starredFiles.length > 0 && (
-        <>
-          <div className="px-3 py-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-            Starred
-          </div>
-          {starredFiles.map((file) => (
-            <div key={file.absolutePath} data-file-path={file.absolutePath} className="relative">
-              <FileRow file={file} flashing={flashSet.has(file.absolutePath)} />
+    <div ref={containerRef} style={{ height: totalHeight, position: 'relative' }}>
+      <div style={{ position: 'absolute', top: offsetTop, left: 0, right: 0 }}>
+        {visibleItems.map((item) => {
+          if (item.type === 'header') {
+            return (
+              <div
+                key={item.key}
+                className="px-3 text-[10px] font-medium text-zinc-400 uppercase tracking-wider flex items-center"
+                style={{ height: HEADER_HEIGHT }}
+              >
+                Starred
+              </div>
+            );
+          }
+          if (item.type === 'separator') {
+            return (
+              <div
+                key={item.key}
+                className="mx-3 flex items-center"
+                style={{ height: SEPARATOR_HEIGHT }}
+              >
+                <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+              </div>
+            );
+          }
+          const file = item.file;
+          return (
+            <div key={item.key} className="relative">
+              <FileRow
+                file={file}
+                flashing={flashSet.has(file.absolutePath)}
+                isSelected={selectedPath === file.absolutePath}
+                isStarred={starredSet.has(file.absolutePath)}
+                onToggleStar={handleToggleStar}
+              />
             </div>
-          ))}
-          <div className="mx-3 my-1 border-t border-zinc-200 dark:border-zinc-700" />
-        </>
-      )}
-      {otherFiles.map((file) => (
-        <div key={file.absolutePath} data-file-path={file.absolutePath} className="relative">
-          <FileRow file={file} flashing={flashSet.has(file.absolutePath)} />
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }

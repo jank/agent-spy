@@ -41,6 +41,8 @@ let watcherService: FileWatcherService | null = null;
 let starredStore: StarredStore | null = null;
 
 async function openFolder(folderPath: string) {
+  const t0 = performance.now();
+
   // Tear down previous services
   watcherService?.close();
 
@@ -48,17 +50,10 @@ async function openFolder(folderPath: string) {
   watcherService = new FileWatcherService(folderPath);
   starredStore = new StarredStore(folderPath);
 
-  const isGitRepo = await gitService.isGitRepo();
-
-  if (isGitRepo) {
-    const { changed, newFiles } = await gitService.getChangedFiles();
-    watcherService.setGitChangedFiles(changed, newFiles);
-    watcherService.onRefreshGitStatus(() => gitService!.getChangedFiles());
-    watcherService.startGitWatching();
-  }
-
+  // Start watcher immediately so it begins scanning while we check git
   watcherService.startWatching();
 
+  // Register onChange early so incremental updates reach the renderer during scan
   watcherService.onChange((files) => {
     const win = BrowserWindow.getAllWindows()[0];
     if (win) {
@@ -66,10 +61,30 @@ async function openFolder(folderPath: string) {
     }
   });
 
+  // Check git status in parallel with the file scan
+  const isGitRepo = await gitService.isGitRepo();
+
+  if (isGitRepo) {
+    // Start git watching and fetch changed files in parallel with the ongoing scan
+    const gitResult = gitService.getChangedFiles();
+    watcherService.onRefreshGitStatus(() => gitService!.getChangedFiles());
+    watcherService.startGitWatching();
+
+    const { changed, newFiles } = await gitResult;
+    watcherService.setGitChangedFiles(changed, newFiles);
+    console.warn(
+      `[perf] git status: ${changed.size} changed, ${newFiles.size} new in ${(performance.now() - t0).toFixed(0)}ms`,
+    );
+  }
+
   const files = await watcherService.getInitialFiles();
   const starred = starredStore.getStarred();
 
   saveState({ lastFolderPath: folderPath });
+
+  console.warn(
+    `[perf] openFolder complete: ${files.length} files in ${(performance.now() - t0).toFixed(0)}ms`,
+  );
 
   return { folderPath, files, starred, isGitRepo };
 }

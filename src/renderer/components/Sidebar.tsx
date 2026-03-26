@@ -24,6 +24,7 @@ function ThemeToggle() {
 
 export function Sidebar() {
   const { folderPath, focusPane } = useAppStore();
+  const fileCount = useAppStore((s) => s.files.length);
   const [width, setWidth] = useState(280);
   const [search, setSearch] = useState('');
   const [changedOnly, setChangedOnly] = useState(false);
@@ -126,6 +127,11 @@ export function Sidebar() {
       {/* Footer */}
       <div className="px-3 py-2 flex items-center border-t border-zinc-200 dark:border-zinc-700">
         <ThemeToggle />
+        {folderPath && (
+          <span className="ml-auto text-[10px] text-zinc-400">
+            {fileCount.toLocaleString()} files
+          </span>
+        )}
       </div>
 
       {/* Resize handle */}
