@@ -71,6 +71,7 @@ describe('FileWatcherService', () => {
         modifiedMs: 1000,
         isGitChanged: false,
         isNew: false,
+        isBranchChanged: false,
         generation: 1,
       });
 
@@ -90,6 +91,7 @@ describe('FileWatcherService', () => {
         modifiedMs: 1000,
         isGitChanged: false,
         isNew: false,
+        isBranchChanged: false,
         generation: 1,
       });
 
@@ -109,11 +111,35 @@ describe('FileWatcherService', () => {
         modifiedMs: 1000,
         isGitChanged: true,
         isNew: false,
+        isBranchChanged: false,
         generation: 1,
       });
 
       service.setGitChangedFiles(new Set(), new Set());
       expect(filesMap.get('/project/a.ts')!.isGitChanged).toBe(false);
+    });
+  });
+
+  describe('setBranchStatus', () => {
+    it('updates isBranchChanged on tracked files and records branch info', () => {
+      (fs.readFileSync as any).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
+      const service = new FileWatcherService('/project');
+      const filesMap = (service as any).files as Map<string, WatchedFile>;
+      filesMap.set('/project/a.ts', {
+        absolutePath: '/project/a.ts',
+        relativePath: 'a.ts',
+        modifiedMs: 1000,
+        isGitChanged: false,
+        isNew: false,
+        isBranchChanged: false,
+        generation: 1,
+      });
+
+      service.setBranchStatus(new Set(['a.ts']), true, 'feature/x');
+      expect(filesMap.get('/project/a.ts')!.isBranchChanged).toBe(true);
+      expect(service.getBranchInfo()).toEqual({ onBranch: true, branchName: 'feature/x' });
     });
   });
 
@@ -159,6 +185,7 @@ describe('FileWatcherService', () => {
         modifiedMs: 1000,
         isGitChanged: false,
         isNew: false,
+        isBranchChanged: false,
         generation: 1,
       });
       filesMap.set('/project/new.ts', {
@@ -167,6 +194,7 @@ describe('FileWatcherService', () => {
         modifiedMs: 2000,
         isGitChanged: false,
         isNew: false,
+        isBranchChanged: false,
         generation: 1,
       });
 

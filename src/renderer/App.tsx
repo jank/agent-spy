@@ -5,7 +5,7 @@ import { MainContent } from './components/MainContent';
 import { TitleBar } from './components/TitleBar';
 import { HelpDialog } from './components/HelpDialog';
 import { isBinaryFile } from './lib/file-types';
-import type { WatchedFile } from './types';
+import type { WatchedFile, FilesChangedPayload } from './types';
 
 export default function App() {
   // Restore last folder on startup
@@ -104,6 +104,10 @@ export default function App() {
           e.preventDefault();
           store.toggleChangedOnly?.();
           break;
+        case 'b':
+          e.preventDefault();
+          store.toggleBranchOnly?.();
+          break;
         case 'ArrowDown':
         case 'ArrowUp': {
           const delta = e.key === 'ArrowDown' ? 80 : -80;
@@ -131,9 +135,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = window.api.onFilesChanged((files: WatchedFile[]) => {
+    const unsubscribe = window.api.onFilesChanged((payload: FilesChangedPayload) => {
+      const { files, branch } = payload;
       const store = useAppStore.getState();
       store.setFiles(files);
+      store.setBranch(branch);
 
       // Update the selected file if it changed — use indexed lookup for large lists
       const selected = store.selectedFile;

@@ -1,9 +1,12 @@
 import { create } from 'zustand';
-import type { WatchedFile, OpenFolderResult, FileDiffResult, ViewMode } from '../types';
+import type { WatchedFile, OpenFolderResult, FileDiffResult, ViewMode, BranchInfo } from '../types';
+
+const DEFAULT_BRANCH_INFO: BranchInfo = { onBranch: false, branchName: null };
 
 interface AppState {
   folderPath: string | null;
   isGitRepo: boolean;
+  branch: BranchInfo;
   files: WatchedFile[];
   starred: string[];
   selectedFile: WatchedFile | null;
@@ -15,6 +18,7 @@ interface AppState {
   scrollToLine: number | null;
 
   setFolder: (result: OpenFolderResult) => void;
+  setBranch: (branch: BranchInfo) => void;
   setFiles: (files: WatchedFile[]) => void;
   setStarred: (starred: string[]) => void;
   selectFile: (file: WatchedFile) => void;
@@ -37,6 +41,7 @@ interface AppState {
   selectPrevFile: (() => void) | null;
   focusFilter: (() => void) | null;
   toggleChangedOnly: (() => void) | null;
+  toggleBranchOnly: (() => void) | null;
   scrollView: ((delta: number) => void) | null;
   setScrollView: (cb: ((delta: number) => void) | null) => void;
   setGoToNextChange: (cb: (() => void) | null) => void;
@@ -45,11 +50,13 @@ interface AppState {
   setSelectPrevFile: (cb: (() => void) | null) => void;
   setFocusFilter: (cb: (() => void) | null) => void;
   setToggleChangedOnly: (cb: (() => void) | null) => void;
+  setToggleBranchOnly: (cb: (() => void) | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   folderPath: null,
   isGitRepo: false,
+  branch: DEFAULT_BRANCH_INFO,
   files: [],
   starred: [],
   selectedFile: null,
@@ -66,10 +73,12 @@ export const useAppStore = create<AppState>((set) => ({
       files: result.files,
       starred: result.starred,
       isGitRepo: result.isGitRepo,
+      branch: result.branch ?? DEFAULT_BRANCH_INFO,
       selectedFile: null,
       fileContent: null,
       diffData: null,
     }),
+  setBranch: (branch) => set({ branch }),
   setFiles: (files) => set({ files }),
   setStarred: (starred) => set({ starred }),
   selectFile: (file) =>
@@ -101,10 +110,12 @@ export const useAppStore = create<AppState>((set) => ({
   selectPrevFile: null,
   focusFilter: null,
   toggleChangedOnly: null,
+  toggleBranchOnly: null,
   setGoToNextChange: (cb) => set({ goToNextChange: cb }),
   setGoToPrevChange: (cb) => set({ goToPrevChange: cb }),
   setSelectNextFile: (cb) => set({ selectNextFile: cb }),
   setSelectPrevFile: (cb) => set({ selectPrevFile: cb }),
   setFocusFilter: (cb) => set({ focusFilter: cb }),
   setToggleChangedOnly: (cb) => set({ toggleChangedOnly: cb }),
+  setToggleBranchOnly: (cb) => set({ toggleBranchOnly: cb }),
 }));

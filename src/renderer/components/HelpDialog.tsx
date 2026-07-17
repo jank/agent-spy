@@ -100,7 +100,7 @@ export function HelpDialog() {
               <Feature
                 emoji="🔍"
                 title="Changed files filter"
-                description="focus on only the files that were modified"
+                description="focus on uncommitted changes, or every change on the current branch since it was cut"
               />
               <Feature
                 emoji="⭐"
@@ -124,6 +124,7 @@ export function HelpDialog() {
               <Shortcut keys="d" description="Toggle diff / content" />
               <Shortcut keys="/" description="Focus filter" />
               <Shortcut keys="c" description="Toggle changed filter" />
+              <Shortcut keys="b" description="Toggle branch filter" />
               <Shortcut keys="↑ ↓" description="Scroll view" />
               <Shortcut keys="?" description="Toggle help" />
               <Shortcut keys="Esc" description="Close dialog" />

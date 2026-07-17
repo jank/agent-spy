@@ -9,8 +9,18 @@ export interface WatchedFile {
   modifiedMs: number;
   isGitChanged: boolean;
   isNew: boolean;
+  /** True when the file changed since the current branch diverged from its base */
+  isBranchChanged: boolean;
   /** Monotonically increasing counter — bumped on every file change event */
   generation: number;
+}
+
+interface GitRefreshResult {
+  changed: Set<string>;
+  newFiles: Set<string>;
+  branchChanged: Set<string>;
+  onBranch: boolean;
+  branchName: string | null;
 }
 
 export class FileWatcherService {
@@ -23,9 +33,10 @@ export class FileWatcherService {
   private gitDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private gitChangedFiles = new Set<string>();
   private gitNewFiles = new Set<string>();
-  private refreshGitStatus:
-    | (() => Promise<{ changed: Set<string>; newFiles: Set<string> }>)
-    | null = null;
+  private branchChangedFiles = new Set<string>();
+  private onBranch = false;
+  private branchName: string | null = null;
+  private refreshGitStatus: (() => Promise<GitRefreshResult>) | null = null;
   private isReady = false;
   private closed = false;
   private initialScanTimer: ReturnType<typeof setTimeout> | null = null;
@@ -61,7 +72,20 @@ export class FileWatcherService {
     }
   }
 
-  onRefreshGitStatus(cb: () => Promise<{ changed: Set<string>; newFiles: Set<string> }>): void {
+  setBranchStatus(branchChanged: Set<string>, onBranch: boolean, branchName: string | null): void {
+    this.branchChangedFiles = branchChanged;
+    this.onBranch = onBranch;
+    this.branchName = branchName;
+    for (const file of this.files.values()) {
+      file.isBranchChanged = branchChanged.has(file.relativePath);
+    }
+  }
+
+  getBranchInfo(): { onBranch: boolean; branchName: string | null } {
+    return { onBranch: this.onBranch, branchName: this.branchName };
+  }
+
+  onRefreshGitStatus(cb: () => Promise<GitRefreshResult>): void {
     this.refreshGitStatus = cb;
   }
 
@@ -115,6 +139,7 @@ export class FileWatcherService {
         modifiedMs: stat.mtimeMs,
         isGitChanged: this.gitChangedFiles.has(relativePath),
         isNew: this.gitNewFiles.has(relativePath),
+        isBranchChanged: this.branchChangedFiles.has(relativePath),
         generation: (existing?.generation ?? 0) + 1,
       });
     } catch {
@@ -162,9 +187,11 @@ export class FileWatcherService {
     this.debounceTimer = setTimeout(async () => {
       if (this.closed) return;
       if (this.refreshGitStatus) {
-        const { changed, newFiles } = await this.refreshGitStatus();
+        const { changed, newFiles, branchChanged, onBranch, branchName } =
+          await this.refreshGitStatus();
         if (this.closed) return;
         this.setGitChangedFiles(changed, newFiles);
+        this.setBranchStatus(branchChanged, onBranch, branchName);
       }
       this.callback?.(this.getSortedFiles());
     }, 300);
@@ -200,9 +227,11 @@ export class FileWatcherService {
       this.gitDebounceTimer = setTimeout(async () => {
         if (this.closed) return;
         if (this.refreshGitStatus) {
-          const { changed, newFiles } = await this.refreshGitStatus();
+          const { changed, newFiles, branchChanged, onBranch, branchName } =
+            await this.refreshGitStatus();
           if (this.closed) return;
           this.setGitChangedFiles(changed, newFiles);
+          this.setBranchStatus(branchChanged, onBranch, branchName);
         }
         this.callback?.(this.getSortedFiles());
       }, 500);

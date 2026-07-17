@@ -57,7 +57,10 @@ async function openFolder(folderPath: string) {
   watcherService.onChange((files) => {
     const win = BrowserWindow.getAllWindows()[0];
     if (win) {
-      win.webContents.send(IPC.FILES_CHANGED, files);
+      win.webContents.send(IPC.FILES_CHANGED, {
+        files,
+        branch: watcherService!.getBranchInfo(),
+      });
     }
   });
 
@@ -66,14 +69,15 @@ async function openFolder(folderPath: string) {
 
   if (isGitRepo) {
     // Start git watching and fetch changed files in parallel with the ongoing scan
-    const gitResult = gitService.getChangedFiles();
-    watcherService.onRefreshGitStatus(() => gitService!.getChangedFiles());
+    const statusResult = gitService.getFullStatus();
+    watcherService.onRefreshGitStatus(() => gitService!.getFullStatus());
     watcherService.startGitWatching();
 
-    const { changed, newFiles } = await gitResult;
+    const { changed, newFiles, branchChanged, onBranch, branchName } = await statusResult;
     watcherService.setGitChangedFiles(changed, newFiles);
+    watcherService.setBranchStatus(branchChanged, onBranch, branchName);
     console.warn(
-      `[perf] git status: ${changed.size} changed, ${newFiles.size} new in ${(performance.now() - t0).toFixed(0)}ms`,
+      `[perf] git status: ${changed.size} changed, ${newFiles.size} new, ${branchChanged.size} on branch in ${(performance.now() - t0).toFixed(0)}ms`,
     );
   }
 
@@ -86,7 +90,7 @@ async function openFolder(folderPath: string) {
     `[perf] openFolder complete: ${files.length} files in ${(performance.now() - t0).toFixed(0)}ms`,
   );
 
-  return { folderPath, files, starred, isGitRepo };
+  return { folderPath, files, starred, isGitRepo, branch: watcherService.getBranchInfo() };
 }
 
 export function registerIpcHandlers(): void {

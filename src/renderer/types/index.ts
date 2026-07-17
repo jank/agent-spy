@@ -4,7 +4,20 @@ export interface WatchedFile {
   modifiedMs: number;
   isGitChanged: boolean;
   isNew: boolean;
+  isBranchChanged: boolean;
   generation: number;
+}
+
+export interface BranchInfo {
+  /** True when a feature branch (distinct from its base) is checked out */
+  onBranch: boolean;
+  /** The currently checked-out branch name, or null when detached */
+  branchName: string | null;
+}
+
+export interface FilesChangedPayload {
+  files: WatchedFile[];
+  branch: BranchInfo;
 }
 
 export interface OpenFolderResult {
@@ -12,7 +25,10 @@ export interface OpenFolderResult {
   files: WatchedFile[];
   starred: string[];
   isGitRepo: boolean;
+  branch: BranchInfo;
 }
+
+export type FileFilterMode = 'all' | 'changed' | 'branch';
 
 export interface FileDiffResult {
   original: string;
@@ -50,7 +66,7 @@ export interface ElectronAPI {
   saveSidebarWidth: (width: number) => Promise<void>;
   checkForUpdate: () => Promise<UpdateInfo | null>;
   openReleaseUrl: (url: string) => Promise<void>;
-  onFilesChanged: (cb: (files: WatchedFile[]) => void) => () => void;
+  onFilesChanged: (cb: (payload: FilesChangedPayload) => void) => () => void;
 }
 
 declare global {

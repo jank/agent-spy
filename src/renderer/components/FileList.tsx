@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 import { isBinaryFile } from '../lib/file-types';
-import type { WatchedFile } from '../types';
+import type { WatchedFile, FileFilterMode } from '../types';
 
 const ROW_HEIGHT = 32;
 const OVERSCAN = 10;
@@ -112,7 +112,7 @@ const HEADER_HEIGHT = 24;
 /** Height of the separator line between starred and other */
 const SEPARATOR_HEIGHT = 12;
 
-export function FileList({ filter, changedOnly }: { filter: string; changedOnly: boolean }) {
+export function FileList({ filter, filterMode }: { filter: string; filterMode: FileFilterMode }) {
   const files = useAppStore((s) => s.files);
   const starred = useAppStore((s) => s.starred);
   const selectedPath = useAppStore((s) => s.selectedFile?.absolutePath ?? null);
@@ -133,8 +133,10 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
     let filtered = lowerFilter
       ? files.filter((f) => f.relativePath.toLowerCase().includes(lowerFilter))
       : files;
-    if (changedOnly) {
+    if (filterMode === 'changed') {
       filtered = filtered.filter((f) => f.isGitChanged || f.isNew);
+    } else if (filterMode === 'branch') {
+      filtered = filtered.filter((f) => f.isBranchChanged);
     }
     const starred: WatchedFile[] = [];
     const other: WatchedFile[] = [];
@@ -152,7 +154,7 @@ export function FileList({ filter, changedOnly }: { filter: string; changedOnly:
       );
     }
     return { starredFiles: starred, otherFiles: other };
-  }, [files, starredSet, lowerFilter, changedOnly]);
+  }, [files, starredSet, lowerFilter, filterMode]);
 
   // Build flat item list for virtualization
   const items = useMemo(() => {

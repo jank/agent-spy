@@ -6,6 +6,7 @@ vi.mock('simple-git', () => {
     revparse: vi.fn(),
     status: vi.fn(),
     show: vi.fn(),
+    raw: vi.fn(),
   };
   return { default: () => mockGit, __mockGit: mockGit };
 });
@@ -79,6 +80,94 @@ describe('GitService', () => {
       });
       const result = await service.getChangedFiles();
       expect(result.changed.size).toBe(1);
+    });
+  });
+
+  describe('getBranchChangedFiles', () => {
+    it('returns files committed since the branch point', async () => {
+      (mockGit.revparse as any).mockResolvedValue('feature/x');
+      (mockGit.raw as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === 'symbolic-ref') return 'refs/remotes/origin/main\n';
+        if (args[0] === 'merge-base') return 'abc123\n';
+        if (args[0] === 'diff') return 'src/a.ts\nsrc/b.ts\n';
+        return '';
+      });
+      const result = await service.getBranchChangedFiles();
+      expect(result.onBranch).toBe(true);
+      expect(result.branchName).toBe('feature/x');
+      expect(result.files).toEqual(new Set(['src/a.ts', 'src/b.ts']));
+      expect(mockGit.raw).toHaveBeenCalledWith(['merge-base', 'origin/main', 'HEAD']);
+      expect(mockGit.raw).toHaveBeenCalledWith(['diff', '--name-only', 'abc123', 'HEAD']);
+    });
+
+    it('returns onBranch false in detached HEAD', async () => {
+      (mockGit.revparse as any).mockResolvedValue('HEAD');
+      const result = await service.getBranchChangedFiles();
+      expect(result.onBranch).toBe(false);
+      expect(result.files.size).toBe(0);
+    });
+
+    it('falls back to a local base branch when origin/HEAD is absent', async () => {
+      (mockGit.revparse as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === '--abbrev-ref') return 'feature/x';
+        if (args[0] === '--verify' && args[1] === 'main') return 'sha';
+        throw new Error('no such ref');
+      });
+      (mockGit.raw as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === 'symbolic-ref') throw new Error('no origin/HEAD');
+        if (args[0] === 'merge-base') return 'base\n';
+        if (args[0] === 'diff') return 'x.ts\n';
+        return '';
+      });
+      const result = await service.getBranchChangedFiles();
+      expect(result.onBranch).toBe(true);
+      expect(result.files).toEqual(new Set(['x.ts']));
+      expect(mockGit.raw).toHaveBeenCalledWith(['merge-base', 'main', 'HEAD']);
+    });
+
+    it('returns onBranch false when on the default branch', async () => {
+      (mockGit.revparse as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === '--abbrev-ref') return 'main';
+        throw new Error('no such ref');
+      });
+      (mockGit.raw as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === 'symbolic-ref') return 'refs/remotes/origin/main\n';
+        return '';
+      });
+      const result = await service.getBranchChangedFiles();
+      expect(result.onBranch).toBe(false);
+      expect(result.branchName).toBe('main');
+      expect(result.files.size).toBe(0);
+    });
+
+    it('returns empty on error', async () => {
+      (mockGit.revparse as any).mockRejectedValue(new Error('fail'));
+      const result = await service.getBranchChangedFiles();
+      expect(result.onBranch).toBe(false);
+      expect(result.files.size).toBe(0);
+    });
+  });
+
+  describe('getFullStatus', () => {
+    it('combines working-tree changes with branch-point changes', async () => {
+      (mockGit.status as any).mockResolvedValue({
+        modified: ['a.ts'],
+        created: [],
+        not_added: [],
+        renamed: [],
+      });
+      (mockGit.revparse as any).mockResolvedValue('feature/x');
+      (mockGit.raw as any).mockImplementation(async (args: string[]) => {
+        if (args[0] === 'symbolic-ref') return 'refs/remotes/origin/main\n';
+        if (args[0] === 'merge-base') return 'abc123\n';
+        if (args[0] === 'diff') return 'b.ts\n';
+        return '';
+      });
+      const result = await service.getFullStatus();
+      expect(result.changed).toEqual(new Set(['a.ts']));
+      expect(result.branchChanged).toEqual(new Set(['b.ts']));
+      expect(result.onBranch).toBe(true);
+      expect(result.branchName).toBe('feature/x');
     });
   });
 

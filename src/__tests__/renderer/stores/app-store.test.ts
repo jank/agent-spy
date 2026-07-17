@@ -8,6 +8,7 @@ const mockFile: WatchedFile = {
   modifiedMs: Date.now(),
   isGitChanged: false,
   isNew: false,
+  isBranchChanged: false,
   generation: 1,
 };
 
@@ -16,6 +17,7 @@ const mockFolderResult: OpenFolderResult = {
   files: [mockFile],
   starred: ['/project/src/app.ts'],
   isGitRepo: true,
+  branch: { onBranch: false, branchName: null },
 };
 
 beforeEach(() => {
@@ -23,6 +25,7 @@ beforeEach(() => {
   useAppStore.setState({
     folderPath: null,
     isGitRepo: false,
+    branch: { onBranch: false, branchName: null },
     files: [],
     starred: [],
     selectedFile: null,
@@ -41,6 +44,7 @@ beforeEach(() => {
     selectPrevFile: null,
     focusFilter: null,
     toggleChangedOnly: null,
+    toggleBranchOnly: null,
   });
 });
 
