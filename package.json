@@ -45,7 +45,7 @@
     "@typescript-eslint/parser": "^8.57.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
-    "electron": "40.8.0",
+    "electron": "40.8.5",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "husky": "^9.1.7",
@@ -57,7 +57,7 @@
     "shiki": "^4.0.1",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.7.3",
-    "vite": "^6.4.1",
+    "vite": "^6.4.2",
     "vitest": "^4.0.18"
   },
   "dependencies": {
@@ -79,7 +79,7 @@
   },
   "overrides": {
     "tar": "^7.5.10",
-    "dompurify": "^3.3.2",
+    "dompurify": "^3.4.0",
     "@tootallnate/once": "^3.0.1",
     "tmp": "^0.2.4"
   }
